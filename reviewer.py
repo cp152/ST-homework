@@ -1,6 +1,8 @@
 import json
-def review(x,y,z):
+def review(x,y):
+    print(f"收到源代码：{y}\n收到来自上一步的信息：{x}\n！！！当前无代码实现，仅返回默认输出！！！\n\n")
     return {
+        "sourceCodeLoc": "./source.java",
         "protocolVersion": "1.0",
         "messageId": "123e4567-e89b-12d3-a456-426614174003",
         "sessionId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",

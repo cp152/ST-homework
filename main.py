@@ -10,15 +10,14 @@ try:
     from solver import execute as solver_execute
     from reviewer import review as reviewer_review
 except ImportError:
-    # 占位函数，用于演示串联逻辑
-    def examiner_generate(source_code: str, class_name: str, iteration: int,
+    def examiner_generate(source_code_loc: str, class_name: str, iteration: int,
                           previous_feedback: Dict[str, Any]) -> Dict[str, Any]:
         raise NotImplementedError("出题人模型未实现")
 
     def solver_execute(test_case_msg: Dict[str, Any]) -> Dict[str, Any]:
         raise NotImplementedError("解题人模型未实现")
 
-    def reviewer_review(execution_report: Dict[str, Any], source_code: str,
+    def reviewer_review(execution_report: Dict[str, Any], source_code_loc: str,
                         test_code: str) -> Dict[str, Any]:
         raise NotImplementedError("评审员模型未实现")
 
@@ -34,10 +33,10 @@ def current_iso_timestamp() -> str:
     return datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
 
 
-def build_message_header(message_type: str, parent_id: Optional[str] = None,
+def build_message_header(source_code_loc: str, message_type: str, parent_id: Optional[str] = None,
                          session_id: Optional[str] = None) -> Dict[str, Any]:
-    """构造消息头（2.0统一消息头）"""
     return {
+        "sourceCodeLoc": source_code_loc,
         "protocolVersion": "1.0",
         "messageId": generate_uuid(),
         "sessionId": session_id if session_id else generate_uuid(),
@@ -59,7 +58,7 @@ def validate_required_fields(obj: Dict[str, Any], required_fields: List[str],
 
 def validate_generated_test_case(msg: Dict[str, Any]) -> None:
     """验证出题人输出是否符合 2.1 规范"""
-    required = ["protocolVersion", "messageId", "sessionId", "parentMessageId",
+    required = ["sourceCodeLoc", "protocolVersion", "messageId", "sessionId", "parentMessageId",
                 "timestamp", "messageType", "sourceClassName", "testClassName",
                 "testCodeLoc", "requiredEnvironment", "targetCoverage"]
     validate_required_fields(msg, required, "GeneratedTestCase")
@@ -79,7 +78,7 @@ def validate_generated_test_case(msg: Dict[str, Any]) -> None:
 
 def validate_execution_report(msg: Dict[str, Any]) -> None:
     """验证解题人输出是否符合 2.2 规范"""
-    required = ["protocolVersion", "messageId", "sessionId", "parentMessageId",
+    required = ["sourceCodeLoc", "protocolVersion", "messageId", "sessionId", "parentMessageId",
                 "timestamp", "messageType", "sourceClassName", "testClassName",
                 "executionStatus", "environmentCompatibility", "compileResult",
                 "environment"]
@@ -108,7 +107,7 @@ def validate_execution_report(msg: Dict[str, Any]) -> None:
 
 def validate_review_feedback(msg: Dict[str, Any]) -> None:
     """验证评审员输出是否符合 2.3 规范"""
-    required = ["protocolVersion", "messageId", "sessionId", "parentMessageId",
+    required = ["sourceCodeLoc", "protocolVersion", "messageId", "sessionId", "parentMessageId",
                 "timestamp", "messageType", "sourceClassName", "testClassName",
                 "overallAssessment", "issueDetails", "iterationAdvice"]
     validate_required_fields(msg, required, "ReviewFeedback")
@@ -133,7 +132,7 @@ def validate_review_feedback(msg: Dict[str, Any]) -> None:
 
 
 # ================== 用户输入包装 ==================
-def build_initial_review_feedback(source_code: str, class_name: str,
+def build_initial_review_feedback(source_code_loc: str, class_name: str,
                                   target_coverage: Optional[Dict[str, float]] = None,
                                   session_id: Optional[str] = None) -> Dict[str, Any]:
     """
@@ -144,7 +143,7 @@ def build_initial_review_feedback(source_code: str, class_name: str,
         target_coverage = {"lineCoverage": 0.8, "branchCoverage": 0.7, "methodCoverage": 0.75}
     # 提取简单类名（不包含包路径）用于显示，实际全限定名由输入 class_name 提供
     simple_name = class_name.split('.')[-1]
-    header = build_message_header("ReviewFeedback", parent_id="0", session_id=session_id)
+    header = build_message_header(source_code_loc,"ReviewFeedback", parent_id="0", session_id=session_id)
     feedback = {
         **header,
         "sourceClassName": class_name,
@@ -168,18 +167,19 @@ def build_initial_review_feedback(source_code: str, class_name: str,
 
 
 # ================== 主控循环 ==================
-def run_test_generation(source_code: str, class_name: str, class_description: str, max_iterations: int,
+def run_test_generation(source_code_loc: str, class_name: str, class_description: str, max_iterations: int,
                         target_coverage: Optional[Dict[str, float]] = None) -> None:
     """
     串联三个模型的主控函数。
-    :param source_code: Java 被测类源代码（字符串）
+    :param source_code_loc: Java 被测类源代码地址
     :param class_name: 被测类的全限定名（如 "com.example.Calculator"）
+    :param class_description: 被测类功能描述
     :param max_iterations: 最大迭代轮次
     :param target_coverage: 可选目标覆盖率，如 {"lineCoverage": 0.85, ...}
     """
     print("=== 启动多模型协作 Java 单元测试生成 ===\n")
     # 1. 构造初始评审反馈（作为出题人的第一次输入）
-    current_feedback = build_initial_review_feedback(source_code, class_name,
+    current_feedback = build_initial_review_feedback(source_code_loc, class_name,
                                                      target_coverage)
     session_id = current_feedback["sessionId"]
     print(f"会话 ID: {session_id}")
@@ -193,7 +193,7 @@ def run_test_generation(source_code: str, class_name: str, class_description: st
         # ----- 步骤1：调用出题人模型 -----
         print(">> 调用出题人模型生成测试用例...")
         try:
-            test_case_msg = examiner_generate(source_code, class_name,class_description,
+            test_case_msg = examiner_generate(class_name,class_description,
                                               iteration, current_feedback)
             # 验证出题人输出格式
             validate_generated_test_case(test_case_msg)
@@ -220,8 +220,7 @@ def run_test_generation(source_code: str, class_name: str, class_description: st
         # ----- 步骤3：调用评审员模型 -----
         print(">> 调用评审员模型评估...")
         try:
-            review_feedback_msg = reviewer_review(exec_report_msg, source_code,
-                                                  test_case_msg["testCodeLoc"])
+            review_feedback_msg = reviewer_review(exec_report_msg, test_case_msg["testCodeLoc"])
             validate_review_feedback(review_feedback_msg)
             print("  评审员输出格式验证通过。")
             review_feedback_msg["sessionId"] = session_id
@@ -253,18 +252,7 @@ def run_test_generation(source_code: str, class_name: str, class_description: st
 # ================== 使用示例 ==================
 if __name__ == "__main__":
     # 模拟用户输入
-    demo_source_code = """
-package com.example;
-
-public class Calculator {
-    public int add(int a, int b) {
-        return a + b;
-    }
-    public int subtract(int a, int b) {
-        return a - b;
-    }
-}
-"""
+    demo_source_code_loc = "./sorce1.java"
     demo_class_name = "com.example.Calculator"
     demo_class_description = "计算加减法"
     demo_max_iterations = 3
@@ -272,5 +260,5 @@ public class Calculator {
 
     # 注意：以下调用会因模型未实现而抛出 NotImplementedError，
     # 请替换真实的模型导入后运行。
-    run_test_generation(demo_source_code, demo_class_name, demo_class_description, 
+    run_test_generation(demo_source_code_loc, demo_class_name, demo_class_description, 
                         demo_max_iterations, demo_target)
