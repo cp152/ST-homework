@@ -10,15 +10,14 @@ try:
     from solver import execute as solver_execute
     from reviewer import review as reviewer_review
 except ImportError:
-    def examiner_generate(source_code_loc: str, class_name: str, iteration: int,
-                          previous_feedback: Dict[str, Any]) -> Dict[str, Any]:
+    def examiner_generate(source_code_loc: str, class_name: str, class_description: str,
+                      iteration: int, previous_feedback: Dict[str, Any]) -> Dict[str, Any]:
         raise NotImplementedError("出题人模型未实现")
 
     def solver_execute(test_case_msg: Dict[str, Any]) -> Dict[str, Any]:
         raise NotImplementedError("解题人模型未实现")
 
-    def reviewer_review(execution_report: Dict[str, Any], source_code_loc: str,
-                        test_code: str) -> Dict[str, Any]:
+    def reviewer_review(execution_report: Dict[str, Any], test_code_loc: str) -> Dict[str, Any]:
         raise NotImplementedError("评审员模型未实现")
 
 
@@ -193,8 +192,8 @@ def run_test_generation(source_code_loc: str, class_name: str, class_description
         # ----- 步骤1：调用出题人模型 -----
         print(">> 调用出题人模型生成测试用例...")
         try:
-            test_case_msg = examiner_generate(class_name,class_description,
-                                              iteration, current_feedback)
+            test_case_msg = examiner_generate(source_code_loc, class_name, class_description,
+                                  iteration, current_feedback)
             # 验证出题人输出格式
             validate_generated_test_case(test_case_msg)
             print("  出题人输出格式验证通过。")
@@ -252,9 +251,9 @@ def run_test_generation(source_code_loc: str, class_name: str, class_description
 # ================== 使用示例 ==================
 if __name__ == "__main__":
     # 模拟用户输入
-    demo_source_code_loc = "./sorce1.java"
-    demo_class_name = "com.example.Calculator"
-    demo_class_description = "计算加减法"
+    demo_source_code_loc = "./Source1.java"
+    demo_class_name = "Source1"
+    demo_class_description = "命令行交互式计算器：加减乘除与取余，含除数为0分支"
     demo_max_iterations = 3
     demo_target = {"lineCoverage": 0.9, "branchCoverage": 0.8, "methodCoverage": 1.0}
 
