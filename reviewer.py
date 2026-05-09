@@ -1,56 +1,331 @@
 import json
-def review(x,y):
-    print(f"收到源代码：{y}\n收到来自上一步的信息：{x}\n！！！当前无代码实现，仅返回默认输出！！！\n\n")
-    return {
-        "sourceCodeLoc": "./source.java",
-        "protocolVersion": "1.0",
-        "messageId": "123e4567-e89b-12d3-a456-426614174003",
-        "sessionId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-        "parentMessageId": "ExecutionReport的messageId",
-        "timestamp": "2026-05-06T10:30:15Z",
-        "messageType": "ReviewFeedback",
-        "sourceClassName": "com.example.Calculator",
-        "testClassName": "com.example.CalculatorTest",
-        "overallAssessment": {
-            "qualityScore": 0.6,
-            "coverageAdequacy": "INSUFFICIENT",
-            "normativeLevel": "ACCEPTABLE",
-            "summary": "测试逻辑基本合理，但缺少对 null 参数、溢出等边界场景的覆盖，断言消息缺失。"
-        },
-        "issueDetails": [
-            {
-            "issueId": "issue-001",
+import uuid
+from datetime import datetime, timezone
+from typing import Dict, Any, List
+
+from review_rules import *
+
+
+# =========================================================
+# Utility Functions
+# =========================================================
+
+def generate_uuid() -> str:
+    return str(uuid.uuid4())
+
+
+def current_timestamp() -> str:
+    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def load_test_code(test_code_loc: str) -> str:
+    """
+    读取测试代码
+    """
+
+    try:
+        with open(test_code_loc, "r", encoding="utf-8") as f:
+            return f.read()
+
+    except Exception:
+        return ""
+
+
+# =========================================================
+# Issue Generation
+# =========================================================
+
+def generate_issue_details(
+        execution_report: Dict[str, Any]
+) -> List[Dict[str, Any]]:
+    """
+    根据 execution report 生成 issue 列表
+    """
+
+    issues = []
+
+    coverage = execution_report.get("coverage", {})
+
+    line_cov = coverage.get("lineCoverage", 0.0)
+    branch_cov = coverage.get("branchCoverage", 0.0)
+
+    execution_results = execution_report.get(
+        "executionResults",
+        {}
+    )
+
+    failed_tests = execution_results.get("failed", 0)
+    errors = execution_results.get("errors", 0)
+
+    # =====================================================
+    # Coverage Gap
+    # =====================================================
+
+    if branch_cov < 0.7:
+        issues.append({
+            "issueId": generate_uuid(),
             "category": "COVERAGE_GAP",
             "severity": "HIGH",
-            "targetMethod": "add",
-            "description": "未测试两个整数相加溢出的情况。",
-            "relatedCoverageItemId": "cov-003",
-            "suggestion": "增加测试用例 testAdd_Overflow，传入 Integer.MAX_VALUE 和 1，验证抛出 ArithmeticException 或返回预期溢出结果。"
-            },
-            {
-            "issueId": "issue-002",
+            "targetMethod": "UNKNOWN",
+            "description": "Branch coverage is insufficient.",
+            "relatedCoverageItemId": None,
+            "suggestion": "Add additional branch path tests."
+        })
+
+    # =====================================================
+    # Assertion Problems
+    # =====================================================
+
+    if failed_tests > 0:
+        issues.append({
+            "issueId": generate_uuid(),
             "category": "ASSERTION",
             "severity": "MEDIUM",
-            "targetMethod": "testSubtract_NegativeResult",
-            "description": "断言缺少失败时的提示消息，难以快速定位问题。",
-            "suggestion": "使用 assertEquals( -5, result, \"subtract(2,7) should return -5\" );"
-            },
-            {
-            "issueId": "issue-003",
-            "category": "CODE_STYLE",
-            "severity": "LOW",
-            "targetMethod": "testAdd_PositiveNumbers",
-            "description": "方法名未遵循 givenWhenThen 模式，可读性一般。",
-            "suggestion": "重命名为 testAdd_givenPositiveNumbers_returnsSum"
-            }
-        ],
+            "targetMethod": "UNKNOWN",
+            "description": "Some test assertions failed.",
+            "relatedCoverageItemId": None,
+            "suggestion": "Check expected values and assertion logic."
+        })
+
+    # =====================================================
+    # Execution Errors
+    # =====================================================
+
+    if errors > 0:
+        issues.append({
+            "issueId": generate_uuid(),
+            "category": "EXCEPTION_HANDLING",
+            "severity": "HIGH",
+            "targetMethod": "UNKNOWN",
+            "description": "Unexpected runtime errors exist.",
+            "relatedCoverageItemId": None,
+            "suggestion": "Add exception handling test cases."
+        })
+
+    # =====================================================
+    # Low Line Coverage
+    # =====================================================
+
+    if line_cov < 0.8:
+        issues.append({
+            "issueId": generate_uuid(),
+            "category": "EDGE_CASE",
+            "severity": "MEDIUM",
+            "targetMethod": "UNKNOWN",
+            "description": "Line coverage is below target.",
+            "relatedCoverageItemId": None,
+            "suggestion": "Add boundary value and edge-case tests."
+        })
+
+    return issues
+
+
+# =========================================================
+# Build ReviewFeedback
+# =========================================================
+
+def build_review_feedback(
+        execution_report: Dict[str, Any],
+        issue_details: List[Dict[str, Any]],
+        overall_assessment: Dict[str, Any],
+        should_continue_flag: bool,
+        focus_areas: List[str]
+) -> Dict[str, Any]:
+    """
+    构建最终 ReviewFeedback JSON
+    """
+
+    coverage = execution_report.get("coverage", {})
+
+    return {
+
+        "sourceCodeLoc":
+            execution_report.get("sourceCodeLoc"),
+
+        "protocolVersion":
+            "1.0",
+
+        "messageId":
+            generate_uuid(),
+
+        "sessionId":
+            execution_report.get("sessionId"),
+
+        "parentMessageId":
+            execution_report.get("messageId"),
+
+        "timestamp":
+            current_timestamp(),
+
+        "messageType":
+            "ReviewFeedback",
+
+        "sourceClassName":
+            execution_report.get("sourceClassName"),
+
+        "testClassName":
+            execution_report.get("testClassName"),
+
+        "overallAssessment":
+            overall_assessment,
+
+        "issueDetails":
+            issue_details,
+
         "iterationAdvice": {
-            "shouldContinue": True,
-            "focusArea": ["边界值测试", "异常场景覆盖", "断言描述"],
+
+            "shouldContinue":
+                should_continue_flag,
+
+            "focusArea":
+                focus_areas,
+
             "targetNextCoverage": {
-            "lineCoverage": 0.85,
-            "branchCoverage": 0.75,
-            "methodCoverage": 0.75,
+
+                "lineCoverage":
+                    min(
+                        coverage.get("lineCoverage", 0.0) + 0.1,
+                        1.0
+                    ),
+
+                "branchCoverage":
+                    min(
+                        coverage.get("branchCoverage", 0.0) + 0.1,
+                        1.0
+                    ),
+
+                "methodCoverage":
+                    min(
+                        coverage.get("methodCoverage", 0.0) + 0.1,
+                        1.0
+                    )
             }
         }
     }
+
+
+# =========================================================
+# Main Review Function
+# =========================================================
+
+def review(
+        execution_report: Dict[str, Any],
+        test_code_loc: str
+) -> Dict[str, Any]:
+
+    print("========== Reviewer Agent ==========")
+
+    # =====================================================
+    # 1. Read Coverage Info
+    # =====================================================
+
+    coverage = execution_report.get("coverage", {})
+
+    line_cov = coverage.get("lineCoverage", 0.0)
+
+    branch_cov = coverage.get("branchCoverage", 0.0)
+
+    # =====================================================
+    # 2. Load Test Code
+    # =====================================================
+
+    test_code = load_test_code(test_code_loc)
+
+    print(f"Loaded test code length: {len(test_code)}")
+
+    # =====================================================
+    # 3. Estimate Assertion Quality
+    # =====================================================
+
+    assertion_quality = estimate_assertion_quality(
+        assertion_count=3,
+        has_assertion_message=True,
+        uses_assert_throws=False
+    )
+
+    # =====================================================
+    # 4. Generate Overall Assessment
+    # =====================================================
+
+    overall_assessment = build_overall_assessment(
+        line_cov,
+        branch_cov,
+        assertion_quality
+    )
+
+    # =====================================================
+    # 5. Generate Issues
+    # =====================================================
+
+    issue_details = generate_issue_details(
+        execution_report
+    )
+
+    # =====================================================
+    # 6. Count High Severity Issues
+    # =====================================================
+
+    high_issue_count = count_high_severity_issues(
+        issue_details
+    )
+
+    # =====================================================
+    # 7. Compile Status
+    # =====================================================
+
+    compile_success = is_compile_success(
+        execution_report
+    )
+
+    # =====================================================
+    # 8. Failed Test Count
+    # =====================================================
+
+    failed_test_count = get_failed_test_count(
+        execution_report
+    )
+
+    # =====================================================
+    # 9. Decide Whether Continue
+    # =====================================================
+
+    continue_flag = should_continue(
+        line_cov=line_cov,
+        branch_cov=branch_cov,
+
+        target_line_cov=0.9,
+        target_branch_cov=0.8,
+
+        compile_success=compile_success,
+
+        failed_test_count=failed_test_count,
+
+        high_severity_issue_count=high_issue_count
+    )
+
+    # =====================================================
+    # 10. Generate Focus Areas
+    # =====================================================
+
+    focus_areas = generate_focus_areas(
+        line_cov,
+        branch_cov,
+        failed_test_count,
+        high_issue_count
+    )
+
+    # =====================================================
+    # 11. Build Final JSON
+    # =====================================================
+
+    feedback = build_review_feedback(
+        execution_report,
+        issue_details,
+        overall_assessment,
+        continue_flag,
+        focus_areas
+    )
+
+    print("Reviewer feedback generated.")
+
+    return feedback
