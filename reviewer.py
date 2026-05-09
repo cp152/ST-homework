@@ -22,11 +22,9 @@ def load_test_code(test_code_loc: str) -> str:
     """
     读取测试代码
     """
-
     try:
         with open(test_code_loc, "r", encoding="utf-8") as f:
             return f.read()
-
     except Exception:
         return ""
 
@@ -35,32 +33,24 @@ def load_test_code(test_code_loc: str) -> str:
 # Issue Generation
 # =========================================================
 
-def generate_issue_details(
-        execution_report: Dict[str, Any]
-) -> List[Dict[str, Any]]:
+def generate_issue_details(execution_report: Dict[str, Any]) -> List[Dict[str, Any]]:
     """
     根据 execution report 生成 issue 列表
+    兼容：coverage / executionResults 在某些 executionStatus 下可能为 None
     """
+    issues: List[Dict[str, Any]] = []
 
-    issues = []
-
-    coverage = execution_report.get("coverage", {})
-
+    coverage = execution_report.get("coverage") or {}
     line_cov = coverage.get("lineCoverage", 0.0)
     branch_cov = coverage.get("branchCoverage", 0.0)
 
-    execution_results = execution_report.get(
-        "executionResults",
-        {}
-    )
-
+    execution_results = execution_report.get("executionResults") or {}
     failed_tests = execution_results.get("failed", 0)
     errors = execution_results.get("errors", 0)
 
     # =====================================================
     # Coverage Gap
     # =====================================================
-
     if branch_cov < 0.7:
         issues.append({
             "issueId": generate_uuid(),
@@ -75,7 +65,6 @@ def generate_issue_details(
     # =====================================================
     # Assertion Problems
     # =====================================================
-
     if failed_tests > 0:
         issues.append({
             "issueId": generate_uuid(),
@@ -90,7 +79,6 @@ def generate_issue_details(
     # =====================================================
     # Execution Errors
     # =====================================================
-
     if errors > 0:
         issues.append({
             "issueId": generate_uuid(),
@@ -105,7 +93,6 @@ def generate_issue_details(
     # =====================================================
     # Low Line Coverage
     # =====================================================
-
     if line_cov < 0.8:
         issues.append({
             "issueId": generate_uuid(),
@@ -133,72 +120,29 @@ def build_review_feedback(
 ) -> Dict[str, Any]:
     """
     构建最终 ReviewFeedback JSON
+    兼容：coverage 可能为 None
     """
-
-    coverage = execution_report.get("coverage", {})
+    coverage = execution_report.get("coverage") or {}
 
     return {
-
-        "sourceCodeLoc":
-            execution_report.get("sourceCodeLoc"),
-
-        "protocolVersion":
-            "1.0",
-
-        "messageId":
-            generate_uuid(),
-
-        "sessionId":
-            execution_report.get("sessionId"),
-
-        "parentMessageId":
-            execution_report.get("messageId"),
-
-        "timestamp":
-            current_timestamp(),
-
-        "messageType":
-            "ReviewFeedback",
-
-        "sourceClassName":
-            execution_report.get("sourceClassName"),
-
-        "testClassName":
-            execution_report.get("testClassName"),
-
-        "overallAssessment":
-            overall_assessment,
-
-        "issueDetails":
-            issue_details,
-
+        "sourceCodeLoc": execution_report.get("sourceCodeLoc"),
+        "protocolVersion": "1.0",
+        "messageId": generate_uuid(),
+        "sessionId": execution_report.get("sessionId"),
+        "parentMessageId": execution_report.get("messageId"),
+        "timestamp": current_timestamp(),
+        "messageType": "ReviewFeedback",
+        "sourceClassName": execution_report.get("sourceClassName"),
+        "testClassName": execution_report.get("testClassName"),
+        "overallAssessment": overall_assessment,
+        "issueDetails": issue_details,
         "iterationAdvice": {
-
-            "shouldContinue":
-                should_continue_flag,
-
-            "focusArea":
-                focus_areas,
-
+            "shouldContinue": should_continue_flag,
+            "focusArea": focus_areas,
             "targetNextCoverage": {
-
-                "lineCoverage":
-                    min(
-                        coverage.get("lineCoverage", 0.0) + 0.1,
-                        1.0
-                    ),
-
-                "branchCoverage":
-                    min(
-                        coverage.get("branchCoverage", 0.0) + 0.1,
-                        1.0
-                    ),
-
-                "methodCoverage":
-                    min(
-                        coverage.get("methodCoverage", 0.0) + 0.1,
-                        1.0
-                    )
+                "lineCoverage": min(coverage.get("lineCoverage", 0.0) + 0.1, 1.0),
+                "branchCoverage": min(coverage.get("branchCoverage", 0.0) + 0.1, 1.0),
+                "methodCoverage": min(coverage.get("methodCoverage", 0.0) + 0.1, 1.0)
             }
         }
     }
@@ -208,35 +152,25 @@ def build_review_feedback(
 # Main Review Function
 # =========================================================
 
-def review(
-        execution_report: Dict[str, Any],
-        test_code_loc: str
-) -> Dict[str, Any]:
-
+def review(execution_report: Dict[str, Any], test_code_loc: str) -> Dict[str, Any]:
     print("========== Reviewer Agent ==========")
 
     # =====================================================
-    # 1. Read Coverage Info
+    # 1. Read Coverage Info (coverage may be None)
     # =====================================================
-
-    coverage = execution_report.get("coverage", {})
-
+    coverage = execution_report.get("coverage") or {}
     line_cov = coverage.get("lineCoverage", 0.0)
-
     branch_cov = coverage.get("branchCoverage", 0.0)
 
     # =====================================================
     # 2. Load Test Code
     # =====================================================
-
     test_code = load_test_code(test_code_loc)
-
     print(f"Loaded test code length: {len(test_code)}")
 
     # =====================================================
     # 3. Estimate Assertion Quality
     # =====================================================
-
     assertion_quality = estimate_assertion_quality(
         assertion_count=3,
         has_assertion_message=True,
@@ -246,7 +180,6 @@ def review(
     # =====================================================
     # 4. Generate Overall Assessment
     # =====================================================
-
     overall_assessment = build_overall_assessment(
         line_cov,
         branch_cov,
@@ -256,57 +189,39 @@ def review(
     # =====================================================
     # 5. Generate Issues
     # =====================================================
-
-    issue_details = generate_issue_details(
-        execution_report
-    )
+    issue_details = generate_issue_details(execution_report)
 
     # =====================================================
     # 6. Count High Severity Issues
     # =====================================================
-
-    high_issue_count = count_high_severity_issues(
-        issue_details
-    )
+    high_issue_count = count_high_severity_issues(issue_details)
 
     # =====================================================
     # 7. Compile Status
     # =====================================================
-
-    compile_success = is_compile_success(
-        execution_report
-    )
+    compile_success = is_compile_success(execution_report)
 
     # =====================================================
     # 8. Failed Test Count
     # =====================================================
-
-    failed_test_count = get_failed_test_count(
-        execution_report
-    )
+    failed_test_count = get_failed_test_count(execution_report)
 
     # =====================================================
     # 9. Decide Whether Continue
     # =====================================================
-
     continue_flag = should_continue(
         line_cov=line_cov,
         branch_cov=branch_cov,
-
         target_line_cov=0.9,
         target_branch_cov=0.8,
-
         compile_success=compile_success,
-
         failed_test_count=failed_test_count,
-
         high_severity_issue_count=high_issue_count
     )
 
     # =====================================================
     # 10. Generate Focus Areas
     # =====================================================
-
     focus_areas = generate_focus_areas(
         line_cov,
         branch_cov,
@@ -317,7 +232,6 @@ def review(
     # =====================================================
     # 11. Build Final JSON
     # =====================================================
-
     feedback = build_review_feedback(
         execution_report,
         issue_details,
@@ -327,5 +241,4 @@ def review(
     )
 
     print("Reviewer feedback generated.")
-
     return feedback
