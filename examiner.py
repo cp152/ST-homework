@@ -1,25 +1,65 @@
-import json
-def generate(x,y,z,m) :
-    print(f"\ngenerater收到:\n类名称：{x}\n类功能描述：{y}\n当前迭代次数：{z}\n当前收到信息：{m}\n！！！当前无代码实现，仅返回默认输出！！！\n\n")
-    return {  
-        "sourceCodeLoc": "./source.java",
-        "protocolVersion": "1.0",
-        "messageId": "550e8400-e29b-41d4-a716-446655440000",
-        "sessionId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-        "parentMessageId": "550e8400-...",
-        "timestamp": "2026-05-06T10:30:00Z",
-        "messageType": "GeneratedTestCase",
-        "sourceClassName": "com.example.Calculator",
-        "sourceVersion": "sha256:abcdef123456...",
-        "testClassName": "com.example.CalculatorTest",
-        "testCodeLoc": "./test1.java",
+import uuid
+from datetime import datetime, timezone
+
+
+def generate_uuid():
+    return str(uuid.uuid4())
+
+
+def current_timestamp():
+    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def generate(
+        class_name,
+        class_description,
+        iteration,
+        previous_feedback
+):
+
+    return {
+
+        "sourceCodeLoc":
+            "./source1.java",
+
+        "protocolVersion":
+            "1.0",
+
+        "messageId":
+            generate_uuid(),
+
+        "sessionId":
+            previous_feedback["sessionId"],
+
+        "parentMessageId":
+            previous_feedback["messageId"],
+
+        "timestamp":
+            current_timestamp(),
+
+        "messageType":
+            "GeneratedTestCase",
+
+        "sourceClassName":
+            class_name,
+
+        "sourceVersion":
+            "sha256-demo",
+
+        "testClassName":
+            f"{class_name}Test",
+
+        "testCodeLoc":
+            "./CalculatorTest.java",
+
         "requiredEnvironment": {
             "junitVersion": "5.9.3",
             "javaVersion": "17"
         },
+
         "targetCoverage": {
             "lineCoverage": 0.8,
             "branchCoverage": 0.7,
-            "methodCoverage": 0.75,
+            "methodCoverage": 0.75
         }
     }
