@@ -6,6 +6,7 @@ import hashlib
 import platform
 import tempfile
 import subprocess
+import shutil
 from typing import Dict, Any, Optional, List, Tuple
 from xml.etree import ElementTree as ET
 
@@ -49,6 +50,17 @@ def _header(source_code_loc: str,
 def _run_cmd(cmd: List[str], cwd: Optional[str], timeout_s: int) -> Dict[str, Any]:
     start = time.time()
     try:
+        # 解析可执行路径（避免 PATH/扩展名问题）
+        resolved = shutil.which(cmd[0])
+        if resolved:
+            cmd = [resolved] + cmd[1:]
+
+        # Windows: .cmd/.bat 必须通过 cmd.exe 执行
+        if os.name == "nt":
+            low = cmd[0].lower()
+            if low.endswith(".cmd") or low.endswith(".bat"):
+                cmd = ["cmd.exe", "/c"] + cmd
+
         p = subprocess.run(
             cmd,
             cwd=cwd,
@@ -83,7 +95,6 @@ def _run_cmd(cmd: List[str], cwd: Optional[str], timeout_s: int) -> Dict[str, An
             "stderr": f"System error running command {cmd}: {e}",
             "durationMs": int((time.time() - start) * 1000),
         }
-
 
 # =========================================================
 # Environment detection
