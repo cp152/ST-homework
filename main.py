@@ -215,6 +215,8 @@ def run_test_generation(source_code_loc: str, class_name: str, class_description
         except Exception as e:
             print(f"  解题人模型出错或格式错误: {e}")
             break
+        
+        print(f"exec_report_msg:{exec_report_msg}")
 
         # ----- 步骤3：调用评审员模型 -----
         print(">> 调用评审员模型评估...")
@@ -254,7 +256,7 @@ if __name__ == "__main__":
     demo_source_code_loc = "./Source1.java"
     demo_class_name = "Source1"
     demo_class_description = "命令行交互式计算器：加减乘除与取余，含除数为0分支"
-    demo_max_iterations = 3
+    demo_max_iterations = 1
     demo_target = {"lineCoverage": 0.9, "branchCoverage": 0.8, "methodCoverage": 1.0}
 
     # 注意：以下调用会因模型未实现而抛出 NotImplementedError，

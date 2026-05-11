@@ -1,8 +1,25 @@
 import os
 import re
 import uuid
+import prompts
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional, Tuple
+import os
+from openai import OpenAI
+
+# 从环境变量读取 key，更安全
+api_key = os.getenv("OPENROUTER_API_KEY")
+if not api_key:
+    raise ValueError("请先设置环境变量 OPENROUTER_API_KEY")
+
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=api_key,
+    default_headers={
+        "HTTP-Referer": "http://localhost:3000",
+        "X-Title": "My Demo",
+    },
+)
 
 
 _RE_PACKAGE = re.compile(r"^\s*package\s+([a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)*)\s*;\s*$", re.MULTILINE)
@@ -42,81 +59,23 @@ def _ensure_dir(p: str) -> None:
     os.makedirs(p, exist_ok=True)
 
 
-def _build_test_code(source_simple: str, test_simple: str, package_in_source: Optional[str]) -> str:
-    pkg_line = f"package {package_in_source};\n\n" if package_in_source else ""
-    # 这里生成的测试是“可跑通版本”，覆盖除数为0与非0
-    return f"""{pkg_line}import org.junit.jupiter.api.Test;
+def _build_test_code(source_simple: str, package_in_source: Optional[str], class_description:str ,source_code:str,previous_feedback: str) -> str:
+    try:
+        prompt = prompts.get_generate_prompt(source_simple,package_in_source,class_description,source_code,previous_feedback)
+        # print(f"prompt:{prompt}")
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.io.PrintStream;
-import java.nio.charset.StandardCharsets;
+        response = client.chat.completions.create (
+            model="deepseek/deepseek-v4-flash",   
+            messages=[
+                {"role": "user", 
+                 "content": prompt}
+            ]
+        )
+        # print(response)
+        return response.choices[0].message.content
 
-import static org.junit.jupiter.api.Assertions.*;
-
-class {test_simple} {{
-
-    @Test
-    void main_whenSecondNonZero_printsDivisionAndModulo() {{
-        String input = "8\\n2\\n";
-
-        InputStream originalIn = System.in;
-        PrintStream originalOut = System.out;
-
-        ByteArrayInputStream in = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-
-        try {{
-            System.setIn(in);
-            System.setOut(new PrintStream(out, true, StandardCharsets.UTF_8));
-            {source_simple}.main(new String[0]);
-        }} finally {{
-            System.setIn(originalIn);
-            System.setOut(originalOut);
-        }}
-
-        String s = out.toString(StandardCharsets.UTF_8);
-
-        assertTrue(s.contains("8 + 2 = 10"));
-        assertTrue(s.contains("8 - 2 = 6"));
-        assertTrue(s.contains("8 * 2 = 16"));
-        assertTrue(s.contains("8 / 2 = 4"));
-        assertTrue(s.contains("8 % 2 = 0"));
-        assertFalse(s.contains("除数不能为0"));
-    }}
-
-    @Test
-    void main_whenSecondZero_printsZeroDivMessage() {{
-        String input = "8\\n0\\n";
-
-        InputStream originalIn = System.in;
-        PrintStream originalOut = System.out;
-
-        ByteArrayInputStream in = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-
-        try {{
-            System.setIn(in);
-            System.setOut(new PrintStream(out, true, StandardCharsets.UTF_8));
-            {source_simple}.main(new String[0]);
-        }} finally {{
-            System.setIn(originalIn);
-            System.setOut(originalOut);
-        }}
-
-        String s = out.toString(StandardCharsets.UTF_8);
-
-        assertTrue(s.contains("8 + 0 = 8"));
-        assertTrue(s.contains("8 - 0 = 8"));
-        assertTrue(s.contains("8 * 0 = 0"));
-        assertTrue(s.contains("除数不能为0，无法进行除法和取余运算。"));
-
-        assertFalse(s.contains(" / 0 = "));
-        assertFalse(s.contains(" % 0 = "));
-    }}
-}}
-"""
+    except Exception as e:
+        print(f"调用出错：{e}")
 
 
 def generate(*args, **kwargs) -> Dict[str, Any]:
@@ -160,11 +119,13 @@ def generate(*args, **kwargs) -> Dict[str, Any]:
     # 写出测试文件：必须实际落盘，才能通过 validate_generated_test_case 的 exists 检查
     out_dir = os.path.join(".", "generated_tests")
     _ensure_dir(out_dir)
-    test_code_loc = os.path.join(out_dir, f"{test_simple}.java")
+    test_code_loc = os.path.join(out_dir, f"{test_simple}_{iteration}.java")
 
     test_code = _build_test_code(source_simple=source_simple,
-                                 test_simple=test_simple,
-                                 package_in_source=package_in_source)
+                                 package_in_source=package_in_source,
+                                 class_description = class_description,
+                                 source_code = source_code,
+                                 previous_feedback = previous_feedback)
 
     with open(test_code_loc, "w", encoding="utf-8") as f:
         f.write(test_code)
