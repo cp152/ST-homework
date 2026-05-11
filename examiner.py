@@ -71,8 +71,13 @@ def _build_test_code(source_simple: str, package_in_source: Optional[str], class
                  "content": prompt}
             ]
         )
-        # print(response)
-        return response.choices[0].message.content
+        print(response)
+        response = response.choices[0].message.content
+        if(response[0] == '`'):
+            response = response[3:-3]
+        if(response[0:4].lower() == "java"):
+            response = response[4:]
+        return response
 
     except Exception as e:
         print(f"调用出错：{e}")

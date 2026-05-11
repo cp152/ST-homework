@@ -151,5 +151,5 @@ class_description：{class_description}
 source_code：{source_code}
 privious_feedback：{privious_feedback}
 
-请保证你的输出是一个Java代码，不包含除了代码内容以外的信息。
+请保证你的输出是一个Java代码，不包含除了代码内容以外的信息。特别的，输出的代码不要用 ``` ``` 包含。
 """
