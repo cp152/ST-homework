@@ -3,6 +3,7 @@ import json
 import uuid
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
+import traceback
 
 # 引入三个模型（假设它们已实现，以下为占位）
 try:
@@ -220,14 +221,30 @@ def run_test_generation(source_code_loc: str, class_name: str, class_description
 
         # ----- 步骤3：调用评审员模型 -----
         print(">> 调用评审员模型评估...")
+        review_feedback_msg = None
         try:
             review_feedback_msg = reviewer_review(exec_report_msg, test_case_msg["testCodeLoc"])
+
+            # 关键：先打印 reviewer 的原始输出，确保“feedback 可见”
+            print("  [RAW] ReviewFeedback：")
+            print(json.dumps(review_feedback_msg, indent=2, ensure_ascii=False))
+
+            # 再进行格式校验（即使校验失败，你也已经看到 RAW 了）
             validate_review_feedback(review_feedback_msg)
             print("  评审员输出格式验证通过。")
+
             review_feedback_msg["sessionId"] = session_id
             review_feedback_msg["parentMessageId"] = exec_report_msg["messageId"]
+
         except Exception as e:
             print(f"  评审员模型出错或格式错误: {e}")
+
+            # 如果 reviewer 已返回但校验失败，也把 RAW 再打印一次（防止上面没打印到）
+            if review_feedback_msg is not None:
+                print("  [RAW-again] ReviewFeedback：")
+                print(json.dumps(review_feedback_msg, indent=2, ensure_ascii=False))
+
+            print(traceback.format_exc())
             break
 
         # ----- 检查终止条件 -----
