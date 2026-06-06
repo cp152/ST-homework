@@ -7,6 +7,8 @@ from typing import Dict, Any, Optional, Tuple
 import os
 from openai import OpenAI
 
+DEBUG = False
+
 # 从环境变量读取 key，更安全
 api_key = os.getenv("OPENROUTER_API_KEY")
 if not api_key:
@@ -79,8 +81,8 @@ def _build_test_code(source_simple: str, package_in_source: Optional[str], class
                 print(f"调用失败，正在重试... (第 {attempt + 1} 次，共 5 次) 错误信息: {e}")
                 if attempt == 4:  # 最后一次失败则raise异常
                     raise
-
-        print(response)
+        if DEBUG:
+            print(response)
         response = response.choices[0].message.content
         if(response[0] == '`'):
             response = response[3:-3]
