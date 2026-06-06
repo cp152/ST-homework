@@ -271,7 +271,7 @@ def run_test_generation(source_code_loc: str, class_name: str, class_description
 import argparse
 
 def main():
-    parser = argparse.ArgumentParser(description="示例程序，演示如何使用 -n 等参数")
+    parser = argparse.ArgumentParser(description="多模型协作 Java 单元测试生成")
     parser.add_argument('-n', '--name', type=str, required=False, help='-n 传类名，或 --name 传类名')
     parser.add_argument('-l', '--loc', type=str, required=False, help='-l 传文件路径，或 --loc 传文件路径')
     parser.add_argument('-d', '--desc', type=str, required=False, help='-d 传类描述，或 --desc 传类描述')
