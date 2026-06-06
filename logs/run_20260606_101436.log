@@ -1,0 +1,16 @@
+2026-06-06 10:14:39,356 | INFO | === 启动多模型协作 Java 单元测试生成 ===
+
+2026-06-06 10:14:39,357 | INFO | 会话 ID: e0a870d8-bdac-4af7-80bd-9a839b30e841
+2026-06-06 10:14:39,357 | INFO | 初始目标覆盖率: {'lineCoverage': 0.9, 'branchCoverage': 0.8, 'methodCoverage': 1.0}
+
+2026-06-06 10:14:39,358 | INFO | ---------- 第 1 轮迭代 ----------
+2026-06-06 10:14:39,358 | INFO | >> 调用出题人模型生成测试用例...
+2026-06-06 10:14:39,358 | ERROR |   出题人模型出错或格式错误: 出题人模型未实现
+Traceback (most recent call last):
+  File "C:\Users\86139\Desktop\ST-homework-main\main.py", line 199, in run_test_generation
+    test_case_msg = examiner_generate(source_code_loc, class_name, class_description,
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\86139\Desktop\ST-homework-main\main.py", line 19, in examiner_generate
+    raise NotImplementedError("出题人模型未实现")
+NotImplementedError: 出题人模型未实现
+2026-06-06 10:14:39,359 | INFO | === 测试生成流程结束 ===

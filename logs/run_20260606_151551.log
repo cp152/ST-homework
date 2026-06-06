@@ -1,0 +1,106 @@
+2026-06-06 15:15:54,885 | INFO | === 启动多模型协作 Java 单元测试生成 ===
+
+2026-06-06 15:15:54,886 | INFO | 会话 ID: 6421ec38-37ae-4c2a-adc4-210b96d030c3
+2026-06-06 15:15:54,886 | INFO | 初始目标覆盖率: {'lineCoverage': 0.9, 'branchCoverage': 0.8, 'methodCoverage': 1.0}
+
+2026-06-06 15:15:54,886 | INFO | ---------- 第 1 轮迭代 ----------
+2026-06-06 15:15:54,886 | INFO | >> 调用出题人模型生成测试用例...
+2026-06-06 15:15:56,767 | INFO | HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-06-06 15:16:32,116 | INFO |   出题人输出格式验证通过。
+2026-06-06 15:16:32,125 | INFO | >> 调用解题人模型执行测试...
+2026-06-06 15:16:40,909 | INFO |   解题人输出格式验证通过。
+2026-06-06 15:16:40,909 | INFO | exec_report_msg:{'sourceCodeLoc': './Source1.java', 'protocolVersion': '1.0', 'messageId': '152aba7f-fddb-4e2b-91b2-119b4ed1aed4', 'sessionId': '6421ec38-37ae-4c2a-adc4-210b96d030c3', 'parentMessageId': 'efbd02ee-6c19-41cd-8a96-5182d433fdb1', 'timestamp': '2026-06-06T07:16:32Z', 'messageType': 'ExecutionReport', 'sourceClassName': 'Source1', 'testClassName': 'Source1Test', 'executionStatus': 'TEST_FAILURE', 'environmentCompatibility': {'isCompatible': True, 'mismatches': []}, 'compileResult': {'success': True, 'errors': []}, 'executionResults': {'totalMethods': 7, 'passed': 5, 'failed': 2, 'errors': 0, 'skipped': 0, 'details': [{'methodName': 'main_secondNonZeroPositive_printsAllOperationsCorrectly', 'status': 'PASSED', 'durationMs': 32}, {'methodName': 'main_secondZero_printsZeroDivMessage', 'status': 'PASSED', 'durationMs': 0}, {'methodName': 'main_firstNegativeSecondNonZero_printsCorrectResults', 'status': 'PASSED', 'durationMs': 1}, {'methodName': 'main_bothZero_printsZeroDivMessage', 'status': 'PASSED', 'durationMs': 0}, {'methodName': 'main_bothNegativeNonZero_printsCorrectResults', 'status': 'PASSED', 'durationMs': 2}, {'methodName': 'main_minIntAndNegativeOne_printsCorrectResults', 'status': 'FAILED', 'durationMs': 5}, {'methodName': 'main_maxIntAndOne_printsCorrectResults', 'status': 'FAILED', 'durationMs': 1}], '_mavenStdout': '[ERROR] Tests run: 7, Failures: 2, Errors: 0, Skipped: 0, Time elapsed: 0.094 s <<< FAILURE! -- in Source1Test\n[ERROR] Source1Test.main_minIntAndNegativeOne_printsCorrectResults -- Time elapsed: 0.005 s <<< FAILURE!\norg.opentest4j.AssertionFailedError: expected: <true> but was: <false>\n\tat org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)\n\tat org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)\n\tat org.junit.jupiter.api.AssertTrue.failNotTrue(AssertTrue.java:63)\n\tat org.junit.jupiter.api.AssertTrue.assertTrue(AssertTrue.java:36)\n\tat org.junit.jupiter.api.AssertTrue.assertTrue(AssertTrue.java:31)\n\tat org.junit.jupiter.api.Assertions.assertTrue(Assertions.java:183)\n\tat Source1Test.main_minIntAndNegativeOne_printsCorrectResults(Source1Test_1.java:199)\n\tat java.base/java.lang.reflect.Method.invoke(Method.java:569)\n\tat java.base/java.util.ArrayList.forEach(ArrayList.java:1511)\n\tat java.base/java.util.ArrayList.forEach(ArrayList.java:1511)\n\n[ERROR] Source1Test.main_maxIntAndOne_printsCorrectResults -- Time elapsed: 0.001 s <<< FAILURE!\norg.opentest4j.AssertionFailedError: expected: <true> but was: <false>\n\tat org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)\n\tat org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)\n\tat org.junit.jupiter.api.AssertTrue.failNotTrue(AssertTrue.java:63)\n\tat org.junit.jupiter.api.AssertTrue.assertTrue(AssertTrue.java:36)\n\tat org.junit.jupiter.api.AssertTrue.assertTrue(AssertTrue.java:31)\n\tat org.junit.jupiter.api.Assertions.assertTrue(Assertions.java:183)\n\tat Source1Test.main_maxIntAndOne_printsCorrectResults(Source1Test_1.java:168)\n\tat java.base/java.lang.reflect.Method.invoke(Method.java:569)\n\tat java.base/java.util.ArrayList.forEach(ArrayList.java:1511)\n\tat java.base/java.util.ArrayList.forEach(ArrayList.java:1511)\n\n[ERROR] Failures: \n[ERROR]   Source1Test.main_maxIntAndOne_printsCorrectResults:168 expected: <true> but was: <false>\n[ERROR]   Source1Test.main_minIntAndNegativeOne_printsCorrectResults:199 expected: <true> but was: <false>\n[ERROR] Tests run: 7, Failures: 2, Errors: 0, Skipped: 0\n[ERROR] Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:3.2.5:test (default-test) on project sandbox: There are test failures.\n[ERROR] \n[ERROR] Please refer to C:\\Users\\86139\\AppData\\Local\\Temp\\java-ut-sandbox-45_gxs33\\target\\surefire-reports for the individual test results.\n[ERROR] Please refer to dump files (if any exist) [date].dump, [date]-jvmRun[N].dump and [date].dumpstream.\n[ERROR] -> [Help 1]\n[ERROR] \n[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.\n[ERROR] Re-run Maven using the -X switch to enable full debug logging.\n[ERROR] \n[ERROR] For more information about the errors and possible solutions, please read the following articles:\n[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException\n', '_mavenStderr': ''}, 'coverage': {'lineCoverage': 0.0, 'branchCoverage': 0.0, 'methodCoverage': 0.0, 'uncoveredItems': []}, 'environment': {'javaVersion': '17', 'junitVersion': '5.10.2', 'mockFramework': 'Mockito 5.12.0', 'os': 'Windows-11-10.0.22000-SP0', 'javaVersionRaw': '17.0.19', 'mavenVersion': '3.9.16', 'javaDetectOutput': 'openjdk version "17.0.19" 2026-04-21\nOpenJDK Runtime Environment Temurin-17.0.19+10 (build 17.0.19+10)\nOpenJDK 64-Bit Server VM Temurin-17.0.19+10 (build 17.0.19+10, mixed mode, sharing)', 'mavenDetectOutput': 'Apache Maven 3.9.16 (2bdd9fddda4b155ebf8000e807eb73fd829a51d5)\nMaven home: D:\\apache-maven-3.9.16-bin\\apache-maven-3.9.16\nJava version: 17.0.19, vendor: Eclipse Adoptium, runtime: C:\\Users\\86139\\AppData\\Local\\Programs\\Eclipse Adoptium\\jdk-17.0.19.10-hotspot\nDefault locale: zh_CN, platform encoding: GBK\nOS name: "windows 11", version: "10.0", arch: "amd64", family: "windows"', 'sandboxRoot': 'C:\\Users\\86139\\AppData\\Local\\Temp\\java-ut-sandbox-45_gxs33', 'jacocoXml': None}}
+2026-06-06 15:16:40,909 | INFO | >> 调用评审员模型评估...
+2026-06-06 15:16:45,963 | INFO | Retrying request to /chat/completions in 0.397239 seconds
+2026-06-06 15:16:51,366 | INFO | Retrying request to /chat/completions in 0.810759 seconds
+2026-06-06 15:16:55,592 | INFO |   评审员模型出错或格式错误: Connection error.
+2026-06-06 15:16:55,607 | INFO | Traceback (most recent call last):
+  File "D:\anaconda_1\Lib\site-packages\httpcore\_exceptions.py", line 10, in map_exceptions
+    yield
+  File "D:\anaconda_1\Lib\site-packages\httpcore\_backends\sync.py", line 168, in start_tls
+    raise exc
+  File "D:\anaconda_1\Lib\site-packages\httpcore\_backends\sync.py", line 163, in start_tls
+    sock = ssl_context.wrap_socket(
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\anaconda_1\Lib\ssl.py", line 455, in wrap_socket
+    return self.sslsocket_class._create(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\anaconda_1\Lib\ssl.py", line 1041, in _create
+    self.do_handshake()
+  File "D:\anaconda_1\Lib\ssl.py", line 1319, in do_handshake
+    self._sslobj.do_handshake()
+ssl.SSLEOFError: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1000)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\anaconda_1\Lib\site-packages\httpx\_transports\default.py", line 69, in map_httpcore_exceptions
+    yield
+  File "D:\anaconda_1\Lib\site-packages\httpx\_transports\default.py", line 233, in handle_request
+    resp = self._pool.handle_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\anaconda_1\Lib\site-packages\httpcore\_sync\connection_pool.py", line 268, in handle_request
+    raise exc
+  File "D:\anaconda_1\Lib\site-packages\httpcore\_sync\connection_pool.py", line 251, in handle_request
+    response = connection.handle_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\anaconda_1\Lib\site-packages\httpcore\_sync\http_proxy.py", line 317, in handle_request
+    stream = stream.start_tls(**kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\anaconda_1\Lib\site-packages\httpcore\_backends\sync.py", line 152, in start_tls
+    with map_exceptions(exc_map):
+  File "D:\anaconda_1\Lib\contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "D:\anaconda_1\Lib\site-packages\httpcore\_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ConnectError: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1000)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\anaconda_1\Lib\site-packages\openai\_base_client.py", line 969, in request
+    response = self._client.send(
+               ^^^^^^^^^^^^^^^^^^
+  File "D:\anaconda_1\Lib\site-packages\httpx\_client.py", line 914, in send
+    response = self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\anaconda_1\Lib\site-packages\httpx\_client.py", line 942, in _send_handling_auth
+    response = self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\anaconda_1\Lib\site-packages\httpx\_client.py", line 979, in _send_handling_redirects
+    response = self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\anaconda_1\Lib\site-packages\httpx\_client.py", line 1015, in _send_single_request
+    response = transport.handle_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\anaconda_1\Lib\site-packages\httpx\_transports\default.py", line 232, in handle_request
+    with map_httpcore_exceptions():
+  File "D:\anaconda_1\Lib\contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "D:\anaconda_1\Lib\site-packages\httpx\_transports\default.py", line 86, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.ConnectError: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1000)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\86139\Desktop\ST-homework-main\main.py", line 229, in run_test_generation
+    review_feedback_msg = reviewer_review(exec_report_msg, test_case_msg["testCodeLoc"])
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\86139\Desktop\ST-homework-main\reviewer.py", line 279, in review
+    response=client.chat.completions.create(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\anaconda_1\Lib\site-packages\openai\_utils\_utils.py", line 287, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\anaconda_1\Lib\site-packages\openai\resources\chat\completions\completions.py", line 925, in create
+    return self._post(
+           ^^^^^^^^^^^
+  File "D:\anaconda_1\Lib\site-packages\openai\_base_client.py", line 1239, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\anaconda_1\Lib\site-packages\openai\_base_client.py", line 1001, in request
+    raise APIConnectionError(request=request) from err
+openai.APIConnectionError: Connection error.
+
+2026-06-06 15:16:55,607 | INFO | === 测试生成流程结束 ===

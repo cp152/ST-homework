@@ -1,0 +1,346 @@
+2026-06-06 15:18:49,465 | INFO | === 启动多模型协作 Java 单元测试生成 ===
+
+2026-06-06 15:18:49,465 | INFO | 会话 ID: 1cc5b535-54f1-4a90-bacc-b8985c6fb401
+2026-06-06 15:18:49,465 | INFO | 初始目标覆盖率: {'lineCoverage': 0.9, 'branchCoverage': 0.8, 'methodCoverage': 1.0}
+
+2026-06-06 15:18:49,465 | INFO | ---------- 第 1 轮迭代 ----------
+2026-06-06 15:18:49,473 | INFO | >> 调用出题人模型生成测试用例...
+2026-06-06 15:18:51,112 | INFO | HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-06-06 15:19:27,063 | INFO |   出题人输出格式验证通过。
+2026-06-06 15:19:27,071 | INFO | >> 调用解题人模型执行测试...
+2026-06-06 15:19:36,125 | INFO |   解题人输出格式验证通过。
+2026-06-06 15:19:36,125 | INFO | exec_report_msg:{'sourceCodeLoc': './Source1.java', 'protocolVersion': '1.0', 'messageId': '7b1f1d7f-510f-4a99-9fff-1bb4ddc0de59', 'sessionId': '1cc5b535-54f1-4a90-bacc-b8985c6fb401', 'parentMessageId': '91c36581-ff58-46af-bd78-f076726abbcc', 'timestamp': '2026-06-06T07:19:27Z', 'messageType': 'ExecutionReport', 'sourceClassName': 'Source1', 'testClassName': 'Source1Test', 'executionStatus': 'SUCCESS', 'environmentCompatibility': {'isCompatible': True, 'mismatches': []}, 'compileResult': {'success': True, 'errors': []}, 'executionResults': {'totalMethods': 2, 'passed': 2, 'failed': 0, 'errors': 0, 'skipped': 0, 'details': [{'methodName': 'main_whenSecondNonZero_printsAllOperations', 'status': 'PASSED', 'durationMs': 41}, {'methodName': 'main_whenSecondZero_printsZeroDivMessage', 'status': 'PASSED', 'durationMs': 0}], '_mavenStdout': '', '_mavenStderr': ''}, 'coverage': {'lineCoverage': 0.9375, 'branchCoverage': 1.0, 'methodCoverage': 0.5, 'uncoveredItems': [{'itemId': 'b909501a-6e2d-49f1-8b60-d68fc537ce99', 'type': 'LINE', 'lineNumber': 4}]}, 'environment': {'javaVersion': '17', 'junitVersion': '5.10.2', 'mockFramework': 'Mockito 5.12.0', 'os': 'Windows-11-10.0.22000-SP0', 'javaVersionRaw': '17.0.19', 'mavenVersion': '3.9.16', 'javaDetectOutput': 'openjdk version "17.0.19" 2026-04-21\nOpenJDK Runtime Environment Temurin-17.0.19+10 (build 17.0.19+10)\nOpenJDK 64-Bit Server VM Temurin-17.0.19+10 (build 17.0.19+10, mixed mode, sharing)', 'mavenDetectOutput': 'Apache Maven 3.9.16 (2bdd9fddda4b155ebf8000e807eb73fd829a51d5)\nMaven home: D:\\apache-maven-3.9.16-bin\\apache-maven-3.9.16\nJava version: 17.0.19, vendor: Eclipse Adoptium, runtime: C:\\Users\\86139\\AppData\\Local\\Programs\\Eclipse Adoptium\\jdk-17.0.19.10-hotspot\nDefault locale: zh_CN, platform encoding: GBK\nOS name: "windows 11", version: "10.0", arch: "amd64", family: "windows"', 'sandboxRoot': 'C:\\Users\\86139\\AppData\\Local\\Temp\\java-ut-sandbox-7dev1v2z', 'jacocoXml': 'C:\\Users\\86139\\AppData\\Local\\Temp\\java-ut-sandbox-7dev1v2z\\target\\site\\jacoco\\jacoco.xml'}}
+2026-06-06 15:19:36,125 | INFO | >> 调用评审员模型评估...
+2026-06-06 15:19:37,048 | INFO | HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-06-06 15:19:40,482 | INFO |   [RAW] ReviewFeedback：
+2026-06-06 15:19:40,482 | INFO | ReviewFeedback:
+{
+  "sourceCodeLoc": "./Source1.java",
+  "protocolVersion": "1.0",
+  "messageId": "c613fa14-5a62-45cb-9b2d-f2aa1094fa84",
+  "sessionId": "1cc5b535-54f1-4a90-bacc-b8985c6fb401",
+  "parentMessageId": "7b1f1d7f-510f-4a99-9fff-1bb4ddc0de59",
+  "timestamp": "2026-06-06T07:19:40.482063Z",
+  "messageType": "ReviewFeedback",
+  "sourceClassName": "Source1",
+  "testClassName": "Source1Test",
+  "overallAssessment": {
+    "qualityScore": 0.93,
+    "coverageAdequacy": "EXCELLENT",
+    "normativeLevel": "GOOD",
+    "summary": "Line coverage=0.94, branch coverage=1.00, overall quality score=0.93."
+  },
+  "issueDetails": [
+    {
+      "issueId": "a0a7550a-fbb5-496e-9f14-a3bae710452a",
+      "category": "边界覆盖不足",
+      "severity": "MEDIUM",
+      "targetMethod": "UNKNOWN",
+      "description": "仅测试了负数与非零除数的组合，未覆盖正数、零、大整数、最小负整数等边界值。",
+      "suggestion": "增加测试用例：num1=0, num2=5；num1=Integer.MAX_VALUE, num2=1；num1=Integer.MIN_VALUE, num2=-1等。",
+      "source": "LLM_REVIEWER"
+    },
+    {
+      "issueId": "4800f82c-b757-48c2-afcd-f6a52eb6558f",
+      "category": "代码重复",
+      "severity": "MEDIUM",
+      "targetMethod": "UNKNOWN",
+      "description": "两个测试方法中重复了相同的System.in/out替换和恢复逻辑，增加了维护成本。",
+      "suggestion": "提取公共的辅助方法或使用@BeforeEach/@AfterEach进行统一管理。",
+      "source": "LLM_REVIEWER"
+    },
+    {
+      "issueId": "01c24924-2083-411b-b533-fae02b8683e5",
+      "category": "断言不够精确",
+      "severity": "MEDIUM",
+      "targetMethod": "UNKNOWN",
+      "description": "使用assertTrue(s.contains(...))可能因输出中包含多余空格或换行导致误判，且未验证输出顺序。",
+      "suggestion": "考虑使用assertLinesMatch或逐行断言，确保输出格式完全正确。",
+      "source": "LLM_REVIEWER"
+    }
+  ],
+  "iterationAdvice": {
+    "shouldContinue": true,
+    "focusArea": [
+      "Boundary value testing"
+    ],
+    "targetNextCoverage": {
+      "lineCoverage": 1.0,
+      "branchCoverage": 1.0,
+      "methodCoverage": 0.6
+    }
+  },
+  "llmReview": {
+    "qualityScore": 0.85,
+    "coverageAdequacy": "覆盖了除数为零和非零两条主要路径，但缺少对正数、大数、负数除数为零等边界情况的覆盖。",
+    "normativeLevel": "良好",
+    "summary": "测试用例结构清晰，正确验证了核心功能，但存在边界覆盖不足和代码重复问题。",
+    "issues": [
+      {
+        "type": "边界覆盖不足",
+        "description": "仅测试了负数与非零除数的组合，未覆盖正数、零、大整数、最小负整数等边界值。",
+        "suggestion": "增加测试用例：num1=0, num2=5；num1=Integer.MAX_VALUE, num2=1；num1=Integer.MIN_VALUE, num2=-1等。"
+      },
+      {
+        "type": "代码重复",
+        "description": "两个测试方法中重复了相同的System.in/out替换和恢复逻辑，增加了维护成本。",
+        "suggestion": "提取公共的辅助方法或使用@BeforeEach/@AfterEach进行统一管理。"
+      },
+      {
+        "type": "断言不够精确",
+        "description": "使用assertTrue(s.contains(...))可能因输出中包含多余空格或换行导致误判，且未验证输出顺序。",
+        "suggestion": "考虑使用assertLinesMatch或逐行断言，确保输出格式完全正确。"
+      }
+    ],
+    "nextFocus": [
+      "增加正数、零、最大/最小整数值的测试用例",
+      "测试除数为零时负数被除数的情况",
+      "验证输出格式的精确性（如换行、空格）",
+      "提取公共的IO重定向逻辑以减少重复"
+    ],
+    "shouldContinue": true
+  }
+}
+2026-06-06 15:19:40,482 | INFO |   评审员输出格式验证通过。
+2026-06-06 15:19:40,483 | INFO |   质量评分: 0.93, 覆盖充分性: EXCELLENT
+2026-06-06 15:19:40,483 | INFO |   是否继续迭代: True
+2026-06-06 15:19:40,483 | INFO |   下一轮目标覆盖率: {'lineCoverage': 1.0, 'branchCoverage': 1.0, 'methodCoverage': 0.6}
+
+2026-06-06 15:19:40,483 | INFO | ---------- 第 2 轮迭代 ----------
+2026-06-06 15:19:40,483 | INFO | >> 调用出题人模型生成测试用例...
+2026-06-06 15:19:44,044 | INFO | HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-06-06 15:20:31,599 | INFO |   出题人输出格式验证通过。
+2026-06-06 15:20:31,599 | INFO | >> 调用解题人模型执行测试...
+2026-06-06 15:20:40,130 | INFO |   解题人输出格式验证通过。
+2026-06-06 15:20:40,132 | INFO | exec_report_msg:{'sourceCodeLoc': './Source1.java', 'protocolVersion': '1.0', 'messageId': '29d7d70f-921b-4a70-8a3c-a740ee66c91f', 'sessionId': '1cc5b535-54f1-4a90-bacc-b8985c6fb401', 'parentMessageId': '4ea5aab9-e683-42ef-8241-e9333e9d336a', 'timestamp': '2026-06-06T07:20:31Z', 'messageType': 'ExecutionReport', 'sourceClassName': 'Source1', 'testClassName': 'Source1Test', 'executionStatus': 'TEST_FAILURE', 'environmentCompatibility': {'isCompatible': True, 'mismatches': []}, 'compileResult': {'success': True, 'errors': []}, 'executionResults': {'totalMethods': 11, 'passed': 0, 'failed': 11, 'errors': 0, 'skipped': 0, 'details': [{'methodName': 'main_withBothZero_printsZeroDivisionMessage', 'status': 'FAILED', 'durationMs': 50}, {'methodName': 'main_withPositiveNumbers_printsAllOperations', 'status': 'FAILED', 'durationMs': 3}, {'methodName': 'main_withMaxIntegerDividendAndOneDivisor_printsCorrectResults', 'status': 'FAILED', 'durationMs': 1}, {'methodName': 'main_withMaxIntegerDividendAndMinusOneDivisor_printsCorrectResults', 'status': 'FAILED', 'durationMs': 3}, {'methodName': 'main_withZeroDivisor_printsZeroDivisionMessage', 'status': 'FAILED', 'durationMs': 3}, {'methodName': 'main_withZeroDividendAndNonZeroDivisor_printsZeroResults', 'status': 'FAILED', 'durationMs': 2}, {'methodName': 'main_withNegativeDividendAndZeroDivisor_printsMessage', 'status': 'FAILED', 'durationMs': 2}, {'methodName': 'main_withMinIntegerDividendAndMinusOneDivisor_printsCorrectResults', 'status': 'FAILED', 'durationMs': 3}, {'methodName': 'main_withNegativeNumbers_printsCorrectResults', 'status': 'FAILED', 'durationMs': 4}, {'methodName': 'main_withMinIntegerDividendAndOneDivisor_printsCorrectResults', 'status': 'FAILED', 'durationMs': 2}, {'methodName': 'main_withLargePositiveDivisor_printsCorrectResults', 'status': 'FAILED', 'durationMs': 3}], '_mavenStdout': '[ERROR] Tests run: 11, Failures: 11, Errors: 0, Skipped: 0, Time elapsed: 0.134 s <<< FAILURE! -- in Source1Test\n[ERROR] Source1Test.main_withBothZero_printsZeroDivisionMessage -- Time elapsed: 0.050 s <<< FAILURE!\norg.opentest4j.AssertionFailedError: \nexpected: <请输入第一个整数: 请输入第二个整数: \n\n运算结果如下：\n0 + 0 = 0\n0 - 0 = 0\n0 * 0 = 0\n除数不能为0，无法进行除法和取余运算。\n> but was: <请输入第一个整数: 请输入第二个整数: \n运算结果如下：\n0 + 0 = 0\n0 - 0 = 0\n0 * 0 = 0\n除数不能为0，无法进行除法和取余运算。\n>\n\tat org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)\n\tat org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)\n\tat org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)\n\tat org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:182)\n\tat org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:177)\n\tat org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1145)\n\tat Source1Test.main_withBothZero_printsZeroDivisionMessage(Source1Test_2.java:95)\n\tat java.base/java.lang.reflect.Method.invoke(Method.java:569)\n\tat java.base/java.util.ArrayList.forEach(ArrayList.java:1511)\n\tat java.base/java.util.ArrayList.forEach(ArrayList.java:1511)\n\n[ERROR] Source1Test.main_withPositiveNumbers_printsAllOperations -- Time elapsed: 0.003 s <<< FAILURE!\norg.opentest4j.AssertionFailedError: \nexpected: <请输入第一个整数: 请输入第二个整数: \n\n运算结果如下：\n5 + 3 = 8\n5 - 3 = 2\n5 * 3 = 15\n5 / 3 = 1\n5 % 3 = 2\n> but was: <请输入第一个整数: 请输入第二个整数: \n运算结果如下：\n5 + 3 = 8\n5 - 3 = 2\n5 * 3 = 15\n5 / 3 = 1\n5 % 3 = 2\n>\n\tat org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)\n\tat org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)\n\tat org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)\n\tat org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:182)\n\tat org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:177)\n\tat org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1145)\n\tat Source1Test.main_withPositiveNumbers_printsAllOperations(Source1Test_2.java:32)\n\tat java.base/java.lang.reflect.Method.invoke(Method.java:569)\n\tat java.base/java.util.ArrayList.forEach(ArrayList.java:1511)\n\tat java.base/java.util.ArrayList.forEach(ArrayList.java:1511)\n\n[ERROR] Source1Test.main_withMaxIntegerDividendAndOneDivisor_printsCorrectResults -- Time elapsed: 0.001 s <<< FAILURE!\norg.opentest4j.AssertionFailedError: \nexpected: <请输入第一个整数: 请输入第二个整数: \n\n运算结果如下：\n2147483647 + 1 = 2147483648\n2147483647 - 1 = 2147483646\n2147483647 * 1 = 2147483647\n2147483647 / 1 = 2147483647\n2147483647 % 1 = 0\n> but was: <请输入第一个整数: 请输入第二个整数: \n运算结果如下：\n2147483647 + 1 = -2147483648\n2147483647 - 1 = 2147483646\n2147483647 * 1 = 2147483647\n2147483647 / 1 = 2147483647\n2147483647 % 1 = 0\n>\n\tat org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)\n\tat org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)\n\tat org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)\n\tat org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:182)\n\tat org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:177)\n\tat org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1145)\n\tat Source1Test.main_withMaxIntegerDividendAndOneDivisor_printsCorrectResults(Source1Test_2.java:67)\n\tat java.base/java.lang.reflect.Method.invoke(Method.java:569)\n\tat java.base/java.util.ArrayList.forEach(ArrayList.java:1511)\n\tat java.base/java.util.ArrayList.forEach(ArrayList.java:1511)\n\n[ERROR] Source1Test.main_withMaxIntegerDividendAndMinusOneDivisor_printsCorrectResults -- Time elapsed: 0.003 s <<< FAILURE!\norg.opentest4j.AssertionFailedError: \nexpected: <请输入第一个整数: 请输入第二个整数: \n\n运算结果如下：\n2147483647 + -1 = 2147483646\n2147483647 - -1 = 2147483648\n2147483647 * -1 = -2147483647\n2147483647 / -1 = -2147483647\n2147483647 % -1 = 0\n> but was: <请输入第一个整数: 请输入第二个整数: \n运算结果如下：\n2147483647 + -1 = 2147483646\n2147483647 - -1 = -2147483648\n2147483647 * -1 = -2147483647\n2147483647 / -1 = -2147483647\n2147483647 % -1 = 0\n>\n\tat org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)\n\tat org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)\n\tat org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)\n\tat org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:182)\n\tat org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:177)\n\tat org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1145)\n\tat Source1Test.main_withMaxIntegerDividendAndMinusOneDivisor_printsCorrectResults(Source1Test_2.java:88)\n\tat java.base/java.lang.reflect.Method.invoke(Method.java:569)\n\tat java.base/java.util.ArrayList.forEach(ArrayList.java:1511)\n\tat java.base/java.util.ArrayList.forEach(ArrayList.java:1511)\n\n[ERROR] Source1Test.main_withZeroDivisor_printsZeroDivisionMessage -- Time elapsed: 0.003 s <<< FAILURE!\norg.opentest4j.AssertionFailedError: \nexpected: <请输入第一个整数: 请输入第二个整数: \n\n运算结果如下：\n5 + 0 = 5\n5 - 0 = 5\n5 * 0 = 0\n除数不能为0，无法进行除法和取余运算。\n> but was: <请输入第一个整数: 请输入第二个整数: \n运算结果如下：\n5 + 0 = 5\n5 - 0 = 5\n5 * 0 = 0\n除数不能为0，无法进行除法和取余运算。\n>\n\tat org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)\n\tat org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)\n\tat org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)\n\tat org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:182)\n\tat org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:177)\n\tat org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1145)\n\tat Source1Test.main_withZeroDivisor_printsZeroDivisionMessage(Source1Test_2.java:39)\n\tat java.base/java.lang.reflect.Method.invoke(Method.java:569)\n\tat java.base/java.util.ArrayList.forEach(ArrayList.java:1511)\n\tat java.base/java.util.ArrayList.forEach(ArrayList.java:1511)\n\n[ERROR] Source1Test.main_withZeroDividendAndNonZeroDivisor_printsZeroResults -- Time elapsed: 0.002 s <<< FAILURE!\norg.opentest4j.AssertionFailedError: \nexpected: <请输入第一个整数: 请输入第二个整数: \n\n运算结果如下：\n0 + 5 = 5\n0 - 5 = -5\n0 * 5 = 0\n0 / 5 = 0\n0 % 5 = 0\n> but was: <请输入第一个整数: 请输入第二个整数: \n运算结果如下：\n0 + 5 = 5\n0 - 5 = -5\n0 * 5 = 0\n0 / 5 = 0\n0 % 5 = 0\n>\n\tat org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)\n\tat org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)\n\tat org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)\n\tat org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:182)\n\tat org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:177)\n\tat org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1145)\n\tat Source1Test.main_withZeroDividendAndNonZeroDivisor_printsZeroResults(Source1Test_2.java:60)\n\tat java.base/java.lang.reflect.Method.invoke(Method.java:569)\n\tat java.base/java.util.ArrayList.forEach(ArrayList.java:1511)\n\tat java.base/java.util.ArrayList.forEach(ArrayList.java:1511)\n\n[ERROR] Source1Test.main_withNegativeDividendAndZeroDivisor_printsMessage -- Time elapsed: 0.002 s <<< FAILURE!\norg.opentest4j.AssertionFailedError: \nexpected: <请输入第一个整数: 请输入第二个整数: \n\n运算结果如下：\n-5 + 0 = -5\n-5 - 0 = -5\n-5 * 0 = 0\n除数不能为0，无法进行除法和取余运算。\n> but was: <请输入第一个整数: 请输入第二个整数: \n运算结果如下：\n-5 + 0 = -5\n-5 - 0 = -5\n-5 * 0 = 0\n除数不能为0，无法进行除法和取余运算。\n>\n\tat org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)\n\tat org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)\n\tat org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)\n\tat org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:182)\n\tat org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:177)\n\tat org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1145)\n\tat Source1Test.main_withNegativeDividendAndZeroDivisor_printsMessage(Source1Test_2.java:53)\n\tat java.base/java.lang.reflect.Method.invoke(Method.java:569)\n\tat java.base/java.util.ArrayList.forEach(ArrayList.java:1511)\n\tat java.base/java.util.ArrayList.forEach(ArrayList.java:1511)\n\n[ERROR] Source1Test.main_withMinIntegerDividendAndMinusOneDivisor_printsCorrectResults -- Time elapsed: 0.003 s <<< FAILURE!\norg.opentest4j.AssertionFailedError: \nexpected: <请输入第一个整数: 请输入第二个整数: \n\n运算结果如下：\n-2147483648 + -1 = -2147483649\n-2147483648 - -1 = -2147483647\n-2147483648 * -1 = 2147483648\n-2147483648 / -1 = -2147483648\n-2147483648 % -1 = 0\n> but was: <请输入第一个整数: 请输入第二个整数: \n运算结果如下：\n-2147483648 + -1 = 2147483647\n-2147483648 - -1 = -2147483647\n-2147483648 * -1 = -2147483648\n-2147483648 / -1 = -2147483648\n-2147483648 % -1 = 0\n>\n\tat org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)\n\tat org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)\n\tat org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)\n\tat org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:182)\n\tat org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:177)\n\tat org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1145)\n\tat Source1Test.main_withMinIntegerDividendAndMinusOneDivisor_printsCorrectResults(Source1Test_2.java:81)\n\tat java.base/java.lang.reflect.Method.invoke(Method.java:569)\n\tat java.base/java.util.ArrayList.forEach(ArrayList.java:1511)\n\tat java.base/java.util.ArrayList.forEach(ArrayList.java:1511)\n\n[ERROR] Source1Test.main_withNegativeNumbers_printsCorrectResults -- Time elapsed: 0.004 s <<< FAILURE!\norg.opentest4j.AssertionFailedError: \nexpected: <请输入第一个整数: 请输入第二个整数: \n\n运算结果如下：\n-5 + 2 = -3\n-5 - 2 = -7\n-5 * 2 = -10\n-5 / 2 = -2\n-5 % 2 = -1\n> but was: <请输入第一个整数: 请输入第二个整数: \n运算结果如下：\n-5 + 2 = -3\n-5 - 2 = -7\n-5 * 2 = -10\n-5 / 2 = -2\n-5 % 2 = -1\n>\n\tat org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)\n\tat org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)\n\tat org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)\n\tat org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:182)\n\tat org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:177)\n\tat org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1145)\n\tat Source1Test.main_withNegativeNumbers_printsCorrectResults(Source1Test_2.java:46)\n\tat java.base/java.lang.reflect.Method.invoke(Method.java:569)\n\tat java.base/java.util.ArrayList.forEach(ArrayList.java:1511)\n\tat java.base/java.util.ArrayList.forEach(ArrayList.java:1511)\n\n[ERROR] Source1Test.main_withMinIntegerDividendAndOneDivisor_printsCorrectResults -- Time elapsed: 0.002 s <<< FAILURE!\norg.opentest4j.AssertionFailedError: \nexpected: <请输入第一个整数: 请输入第二个整数: \n\n运算结果如下：\n-2147483648 + 1 = -2147483647\n-2147483648 - 1 = -2147483649\n-2147483648 * 1 = -2147483648\n-2147483648 / 1 = -2147483648\n-2147483648 % 1 = 0\n> but was: <请输入第一个整数: 请输入第二个整数: \n运算结果如下：\n-2147483648 + 1 = -2147483647\n-2147483648 - 1 = 2147483647\n-2147483648 * 1 = -2147483648\n-2147483648 / 1 = -2147483648\n-2147483648 % 1 = 0\n>\n\tat org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)\n\tat org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)\n\tat org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)\n\tat org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:182)\n\tat org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:177)\n\tat org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1145)\n\tat Source1Test.main_withMinIntegerDividendAndOneDivisor_printsCorrectResults(Source1Test_2.java:74)\n\tat java.base/java.lang.reflect.Method.invoke(Method.java:569)\n\tat java.base/java.util.ArrayList.forEach(ArrayList.java:1511)\n\tat java.base/java.util.ArrayList.forEach(ArrayList.java:1511)\n\n[ERROR] Source1Test.main_withLargePositiveDivisor_printsCorrectResults -- Time elapsed: 0.003 s <<< FAILURE!\norg.opentest4j.AssertionFailedError: \nexpected: <请输入第一个整数: 请输入第二个整数: \n\n运算结果如下：\n1 + 2147483647 = 2147483648\n1 - 2147483647 = -2147483646\n1 * 2147483647 = 2147483647\n1 / 2147483647 = 0\n1 % 2147483647 = 1\n> but was: <请输入第一个整数: 请输入第二个整数: \n运算结果如下：\n1 + 2147483647 = -2147483648\n1 - 2147483647 = -2147483646\n1 * 2147483647 = 2147483647\n1 / 2147483647 = 0\n1 % 2147483647 = 1\n>\n\tat org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)\n\tat org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)\n\tat org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)\n\tat org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:182)\n\tat org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:177)\n\tat org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1145)\n\tat Source1Test.main_withLargePositiveDivisor_printsCorrectResults(Source1Test_2.java:102)\n\tat java.base/java.lang.reflect.Method.invoke(Method.java:569)\n\tat java.base/java.util.ArrayList.forEach(ArrayList.java:1511)\n\tat java.base/java.util.ArrayList.forEach(ArrayList.java:1511)\n\n[ERROR] Failures: \n[ERROR]   Source1Test.main_withBothZero_printsZeroDivisionMessage:95 expected: <请输入第一个整数: 请输入第二个整数: \n\n运算结果如下：\n0 + 0 = 0\n0 - 0 = 0\n0 * 0 = 0\n除数不能为0，无法进行除法和取余运算。\n> but was: <请输入第一个整数: 请输入第二个整数: \n运算结果如下：\n0 + 0 = 0\n0 - 0 = 0\n0 * 0 = 0\n除数不能为0，无法进行除法和取余运算。\n>\n[ERROR]   Source1Test.main_withLargePositiveDivisor_printsCorrectResults:102 expected: <请输入第一个整数: 请输入第二个整数: \n\n运算结果如下：\n1 + 2147483647 = 2147483648\n1 - 2147483647 = -2147483646\n1 * 2147483647 = 2147483647\n1 / 2147483647 = 0\n1 % 2147483647 = 1\n> but was: <请输入第一个整数: 请输入第二个整数: \n运算结果如下：\n1 + 2147483647 = -2147483648\n1 - 2147483647 = -2147483646\n1 * 2147483647 = 2147483647\n1 / 2147483647 = 0\n1 % 2147483647 = 1\n>\n[ERROR]   Source1Test.main_withMaxIntegerDividendAndMinusOneDivisor_printsCorrectResults:88 expected: <请输入第一个整数: 请输入第二个整数: \n\n运算结果如下：\n2147483647 + -1 = 2147483646\n2147483647 - -1 = 2147483648\n2147483647 * -1 = -2147483647\n2147483647 / -1 = -2147483647\n2147483647 % -1 = 0\n> but was: <请输入第一个整数: 请输入第二个整数: \n运算结果如下：\n2147483647 + -1 = 2147483646\n2147483647 - -1 = -2147483648\n2147483647 * -1 = -2147483647\n2147483647 / -1 = -2147483647\n2147483647 % -1 = 0\n>\n[ERROR]   Source1Test.main_withMaxIntegerDividendAndOneDivisor_printsCorrectResults:67 expected: <请输入第一个整数: 请输入第二个整数: \n\n运算结果如下：\n2147483647 + 1 = 2147483648\n2147483647 - 1 = 2147483646\n2147483647 * 1 = 2147483647\n2147483647 / 1 = 2147483647\n2147483647 % 1 = 0\n> but was: <请输入第一个整数: 请输入第二个整数: \n运算结果如下：\n2147483647 + 1 = -2147483648\n2147483647 - 1 = 2147483646\n2147483647 * 1 = 2147483647\n2147483647 / 1 = 2147483647\n2147483647 % 1 = 0\n>\n[ERROR]   Source1Test.main_withMinIntegerDividendAndMinusOneDivisor_printsCorrectResults:81 expected: <请输入第一个整数: 请输入第二个整数: \n\n运算结果如下：\n-2147483648 + -1 = -2147483649\n-2147483648 - -1 = -2147483647\n-2147483648 * -1 = 2147483648\n-2147483648 / -1 = -2147483648\n-2147483648 % -1 = 0\n> but was: <请输入第一个整数: 请输入第二个整数: \n运算结果如下：\n-2147483648 + -1 = 2147483647\n-2147483648 - -1 = -2147483647\n-2147483648 * -1 = -2147483648\n-2147483648 / -1 = -2147483648\n-2147483648 % -1 = 0\n>\n[ERROR]   Source1Test.main_withMinIntegerDividendAndOneDivisor_printsCorrectResults:74 expected: <请输入第一个整数: 请输入第二个整数: \n\n运算结果如下：\n-2147483648 + 1 = -2147483647\n-2147483648 - 1 = -2147483649\n-2147483648 * 1 = -2147483648\n-2147483648 / 1 = -2147483648\n-2147483648 % 1 = 0\n> but was: <请输入第一个整数: 请输入第二个整数: \n运算结果如下：\n-2147483648 + 1 = -2147483647\n-2147483648 - 1 = 2147483647\n-2147483648 * 1 = -2147483648\n-2147483648 / 1 = -2147483648\n-2147483648 % 1 = 0\n>\n[ERROR]   Source1Test.main_withNegativeDividendAndZeroDivisor_printsMessage:53 expected: <请输入第一个整数: 请输入第二个整数: \n\n运算结果如下：\n-5 + 0 = -5\n-5 - 0 = -5\n-5 * 0 = 0\n除数不能为0，无法进行除法和取余运算。\n> but was: <请输入第一个整数: 请输入第二个整数: \n运算结果如下：\n-5 + 0 = -5\n-5 - 0 = -5\n-5 * 0 = 0\n除数不能为0，无法进行除法和取余运算。\n>\n[ERROR]   Source1Test.main_withNegativeNumbers_printsCorrectResults:46 expected: <请输入第一个整数: 请输入第二个整数: \n\n运算结果如下：\n-5 + 2 = -3\n-5 - 2 = -7\n-5 * 2 = -10\n-5 / 2 = -2\n-5 % 2 = -1\n> but was: <请输入第一个整数: 请输入第二个整数: \n运算结果如下：\n-5 + 2 = -3\n-5 - 2 = -7\n-5 * 2 = -10\n-5 / 2 = -2\n-5 % 2 = -1\n>\n[ERROR]   Source1Test.main_withPositiveNumbers_printsAllOperations:32 expected: <请输入第一个整数: 请输入第二个整数: \n\n运算结果如下：\n5 + 3 = 8\n5 - 3 = 2\n5 * 3 = 15\n5 / 3 = 1\n5 % 3 = 2\n> but was: <请输入第一个整数: 请输入第二个整数: \n运算结果如下：\n5 + 3 = 8\n5 - 3 = 2\n5 * 3 = 15\n5 / 3 = 1\n5 % 3 = 2\n>\n[ERROR]   Source1Test.main_withZeroDividendAndNonZeroDivisor_printsZeroResults:60 expected: <请输入第一个整数: 请输入第二个整数: \n\n运算结果如下：\n0 + 5 = 5\n0 - 5 = -5\n0 * 5 = 0\n0 / 5 = 0\n0 % 5 = 0\n> but was: <请输入第一个整数: 请输入第二个整数: \n运算结果如下：\n0 + 5 = 5\n0 - 5 = -5\n0 * 5 = 0\n0 / 5 = 0\n0 % 5 = 0\n>\n[ERROR]   Source1Test.main_withZeroDivisor_printsZeroDivisionMessage:39 expected: <请输入第一个整数: 请输入第二个整数: \n\n运算结果如下：\n5 + 0 = 5\n5 - 0 = 5\n5 * 0 = 0\n除数不能为0，无法进行除法和取余运算。\n> but was: <请输入第一个整数: 请输入第二个整数: \n运算结果如下：\n5 + 0 = 5\n5 - 0 = 5\n5 * 0 = 0\n除数不能为0，无法进行除法和取余运算。\n>\n[ERROR] Tests run: 11, Failures: 11, Errors: 0, Skipped: 0\n[ERROR] Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:3.2.5:test (default-test) on project sandbox: There are test failures.\n[ERROR] \n[ERROR] Please refer to C:\\Users\\86139\\AppData\\Local\\Temp\\java-ut-sandbox-tx9ik7m1\\target\\surefire-reports for the individual test results.\n[ERROR] Please refer to dump files (if any exist) [date].dump, [date]-jvmRun[N].dump and [date].dumpstream.\n[ERROR] -> [Help 1]\n[ERROR] \n[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.\n[ERROR] Re-run Maven using the -X switch to enable full debug logging.\n[ERROR] \n[ERROR] For more information about the errors and possible solutions, please read the following articles:\n[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException\n', '_mavenStderr': ''}, 'coverage': {'lineCoverage': 0.0, 'branchCoverage': 0.0, 'methodCoverage': 0.0, 'uncoveredItems': []}, 'environment': {'javaVersion': '17', 'junitVersion': '5.10.2', 'mockFramework': 'Mockito 5.12.0', 'os': 'Windows-11-10.0.22000-SP0', 'javaVersionRaw': '17.0.19', 'mavenVersion': '3.9.16', 'javaDetectOutput': 'openjdk version "17.0.19" 2026-04-21\nOpenJDK Runtime Environment Temurin-17.0.19+10 (build 17.0.19+10)\nOpenJDK 64-Bit Server VM Temurin-17.0.19+10 (build 17.0.19+10, mixed mode, sharing)', 'mavenDetectOutput': 'Apache Maven 3.9.16 (2bdd9fddda4b155ebf8000e807eb73fd829a51d5)\nMaven home: D:\\apache-maven-3.9.16-bin\\apache-maven-3.9.16\nJava version: 17.0.19, vendor: Eclipse Adoptium, runtime: C:\\Users\\86139\\AppData\\Local\\Programs\\Eclipse Adoptium\\jdk-17.0.19.10-hotspot\nDefault locale: zh_CN, platform encoding: GBK\nOS name: "windows 11", version: "10.0", arch: "amd64", family: "windows"', 'sandboxRoot': 'C:\\Users\\86139\\AppData\\Local\\Temp\\java-ut-sandbox-tx9ik7m1', 'jacocoXml': None}}
+2026-06-06 15:20:40,132 | INFO | >> 调用评审员模型评估...
+2026-06-06 15:20:42,536 | INFO | HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-06-06 15:20:53,915 | INFO |   [RAW] ReviewFeedback：
+2026-06-06 15:20:53,916 | INFO | ReviewFeedback:
+{
+  "sourceCodeLoc": "./Source1.java",
+  "protocolVersion": "1.0",
+  "messageId": "67f0299e-5385-412e-946e-f26bb76228e6",
+  "sessionId": "1cc5b535-54f1-4a90-bacc-b8985c6fb401",
+  "parentMessageId": "29d7d70f-921b-4a70-8a3c-a740ee66c91f",
+  "timestamp": "2026-06-06T07:20:53.915032Z",
+  "messageType": "ReviewFeedback",
+  "sourceClassName": "Source1",
+  "testClassName": "Source1Test",
+  "overallAssessment": {
+    "qualityScore": 0.15,
+    "coverageAdequacy": "INSUFFICIENT",
+    "normativeLevel": "GOOD",
+    "summary": "Line coverage=0.00, branch coverage=0.00, overall quality score=0.15."
+  },
+  "issueDetails": [
+    {
+      "issueId": "06d62bd9-9b7c-490e-bf1e-0b62c3f51dd2",
+      "category": "COVERAGE_GAP",
+      "severity": "HIGH",
+      "targetMethod": "UNKNOWN",
+      "description": "Branch coverage is insufficient.",
+      "relatedCoverageItemId": null,
+      "suggestion": "Add additional branch path tests."
+    },
+    {
+      "issueId": "e6d74030-adaa-4514-b61a-bb7d64c24ed9",
+      "category": "ASSERTION",
+      "severity": "MEDIUM",
+      "targetMethod": "UNKNOWN",
+      "description": "Some test assertions failed.",
+      "relatedCoverageItemId": null,
+      "suggestion": "Check expected values and assertion logic."
+    },
+    {
+      "issueId": "27900a34-8e3f-457d-9ada-5b7f7bf542b9",
+      "category": "EDGE_CASE",
+      "severity": "MEDIUM",
+      "targetMethod": "UNKNOWN",
+      "description": "Line coverage is below target.",
+      "relatedCoverageItemId": null,
+      "suggestion": "Add boundary value and edge-case tests."
+    },
+    {
+      "issueId": "1e467ab0-ae33-4c9f-8550-77bc47007415",
+      "category": "无效断言",
+      "severity": "MEDIUM",
+      "targetMethod": "UNKNOWN",
+      "description": "所有测试的expected字符串中在'请输入第二个整数: '之后多包含了一个'\\n'，实际输出只包含一次换行，导致全部11个测试因字符串不匹配失败",
+      "suggestion": "修正expected字符串，移除多余的换行符，或者使用正则/灵活匹配方式",
+      "source": "LLM_REVIEWER"
+    },
+    {
+      "issueId": "719c5597-21d4-4b45-87e0-94e2144f1991",
+      "category": "期望值错误",
+      "severity": "MEDIUM",
+      "targetMethod": "UNKNOWN",
+      "description": "测试对整数溢出的行为给出了错误期望，例如'unexpected: 2147483647 + 1 = 2147483648'，但Java中int溢出实际输出-2147483648；同样地，Integer.MIN_VALUE - 1应为正溢出，但测试期望为精确值-2147483649",
+      "suggestion": "应使用long类型预期或修改被测代码来避免溢出，否则测试应与Java语言实际overflow行为一致",
+      "source": "LLM_REVIEWER"
+    },
+    {
+      "issueId": "63c6536f-1575-4021-b6de-73b41884c677",
+      "category": "遗漏边界情况",
+      "severity": "MEDIUM",
+      "targetMethod": "UNKNOWN",
+      "description": "未测试Scanner输入不是整数（如输入字母、浮点数）时是否抛出InputMismatchException；未测试输入为空或仅换行的情况",
+      "suggestion": "增加异常测试，验证当输入非数字时程序是否正确处理（当前程序会抛出异常）",
+      "source": "LLM_REVIEWER"
+    },
+    {
+      "issueId": "d7fc1106-1ca6-442b-a3c6-2016de140d13",
+      "category": "失效断言",
+      "severity": "MEDIUM",
+      "targetMethod": "UNKNOWN",
+      "description": "四个测试中实际输出与期望完全一致（除第一行空行差异外），但被标记为FAILED，说明断言方式过于严格（字符串全文比较），掩盖了正确的业务逻辑",
+      "suggestion": "改为逐行比较或忽略头部/尾部空白，或采用contains断言检查关键输出部分",
+      "source": "LLM_REVIEWER"
+    }
+  ],
+  "iterationAdvice": {
+    "shouldContinue": true,
+    "focusArea": [
+      "Line coverage improvement",
+      "Branch path testing",
+      "Assertion enhancement",
+      "Exception handling"
+    ],
+    "targetNextCoverage": {
+      "lineCoverage": 0.1,
+      "branchCoverage": 0.1,
+      "methodCoverage": 0.1
+    }
+  },
+  "llmReview": {
+    "qualityScore": 0.6,
+    "coverageAdequacy": "基本覆盖了输入输出路径，但未考虑整数溢出、Scanner异常等逻辑路径",
+    "normativeLevel": "测试结构规范，但存在大量因换行符不匹配导致的误判，且断言过于严格地绑定控制台输出格式",
+    "summary": "测试用例覆盖了正常运算、除零情况、边界大数，但所有测试因期望输出中多余一个空行而全部失败；此外，部分边界测试（如Integer.MIN_VALUE - 1）的期望结果与Java实际行为不符，导致整数溢出错误的期望",
+    "issues": [
+      {
+        "type": "无效断言",
+        "description": "所有测试的expected字符串中在'请输入第二个整数: '之后多包含了一个'\\n'，实际输出只包含一次换行，导致全部11个测试因字符串不匹配失败",
+        "suggestion": "修正expected字符串，移除多余的换行符，或者使用正则/灵活匹配方式"
+      },
+      {
+        "type": "期望值错误",
+        "description": "测试对整数溢出的行为给出了错误期望，例如'unexpected: 2147483647 + 1 = 2147483648'，但Java中int溢出实际输出-2147483648；同样地，Integer.MIN_VALUE - 1应为正溢出，但测试期望为精确值-2147483649",
+        "suggestion": "应使用long类型预期或修改被测代码来避免溢出，否则测试应与Java语言实际overflow行为一致"
+      },
+      {
+        "type": "遗漏边界情况",
+        "description": "未测试Scanner输入不是整数（如输入字母、浮点数）时是否抛出InputMismatchException；未测试输入为空或仅换行的情况",
+        "suggestion": "增加异常测试，验证当输入非数字时程序是否正确处理（当前程序会抛出异常）"
+      },
+      {
+        "type": "失效断言",
+        "description": "四个测试中实际输出与期望完全一致（除第一行空行差异外），但被标记为FAILED，说明断言方式过于严格（字符串全文比较），掩盖了正确的业务逻辑",
+        "suggestion": "改为逐行比较或忽略头部/尾部空白，或采用contains断言检查关键输出部分"
+      }
+    ],
+    "nextFocus": [
+      "修正所有expected字符串中的多余换行符",
+      "针对整数溢出场景，要么改用Long类型计算，要么测试期望与Java溢出行为一致",
+      "增加非法输入（非数字）的异常测试（如InputMismatchException）",
+      "考虑使用更灵活的断言（如assertLinesMatch）来避免格式细节导致测试不稳定"
+    ],
+    "shouldContinue": true
+  }
+}
+2026-06-06 15:20:53,916 | INFO |   评审员输出格式验证通过。
+2026-06-06 15:20:53,916 | INFO |   质量评分: 0.15, 覆盖充分性: INSUFFICIENT
+2026-06-06 15:20:53,916 | INFO |   是否继续迭代: True
+2026-06-06 15:20:53,917 | INFO |   下一轮目标覆盖率: {'lineCoverage': 0.1, 'branchCoverage': 0.1, 'methodCoverage': 0.1}
+
+2026-06-06 15:20:53,917 | INFO | ---------- 第 3 轮迭代 ----------
+2026-06-06 15:20:53,917 | INFO | >> 调用出题人模型生成测试用例...
+2026-06-06 15:20:55,487 | INFO | HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-06-06 15:21:40,509 | INFO |   出题人输出格式验证通过。
+2026-06-06 15:21:40,509 | INFO | >> 调用解题人模型执行测试...
+2026-06-06 15:21:49,723 | INFO |   解题人输出格式验证通过。
+2026-06-06 15:21:49,723 | INFO | exec_report_msg:{'sourceCodeLoc': './Source1.java', 'protocolVersion': '1.0', 'messageId': 'db15a251-02a4-47d9-a7db-4a1e4bf93fc9', 'sessionId': '1cc5b535-54f1-4a90-bacc-b8985c6fb401', 'parentMessageId': 'd0f3dc1d-3d63-4b5f-90b2-32bb79012d3c', 'timestamp': '2026-06-06T07:21:40Z', 'messageType': 'ExecutionReport', 'sourceClassName': 'Source1', 'testClassName': 'Source1Test', 'executionStatus': 'SUCCESS', 'environmentCompatibility': {'isCompatible': True, 'mismatches': []}, 'compileResult': {'success': True, 'errors': []}, 'executionResults': {'totalMethods': 14, 'passed': 14, 'failed': 0, 'errors': 0, 'skipped': 0, 'details': [{'methodName': 'main_whenSecondIsMinusOne_printsCorrectDivAndMod', 'status': 'PASSED', 'durationMs': 37}, {'methodName': 'main_whenLargeNegativeOverflow_printsActualJavaOverflowBehaviour', 'status': 'PASSED', 'durationMs': 10}, {'methodName': 'main_whenSecondIsZero_printsDivisionByZeroMessageAndSkipsDivMod', 'status': 'PASSED', 'durationMs': 1}, {'methodName': 'main_whenFirstIsNegativeSecondPositive_printsCorrectResults', 'status': 'PASSED', 'durationMs': 3}, {'methodName': 'main_whenInputIsNonInteger_throwsInputMismatchException', 'status': 'PASSED', 'durationMs': 5}, {'methodName': 'main_whenFirstIsZero_printsCorrectResults', 'status': 'PASSED', 'durationMs': 1}, {'methodName': 'main_whenSecondIsOne_printsSameValuesForDivAndMod', 'status': 'PASSED', 'durationMs': 1}, {'methodName': 'main_whenInputsAreEdgeInts_printsActualJavaOverflowBehaviour', 'status': 'PASSED', 'durationMs': 3}, {'methodName': 'main_whenBothZero_printsZeroForAddSubMulAndDivisionByZeroMessage', 'status': 'PASSED', 'durationMs': 2}, {'methodName': 'main_whenSecondNonZero_printsCorrectArithmeticResults', 'status': 'PASSED', 'durationMs': 1}, {'methodName': 'main_whenSecondInputIsNonInteger_throwsInputMismatchException', 'status': 'PASSED', 'durationMs': 2}, {'methodName': 'main_whenBothNegativeSecondNonZero_printsCorrectResults', 'status': 'PASSED', 'durationMs': 2}, {'methodName': 'main_whenInputIsFloatingPoint_throwsInputMismatchException', 'status': 'PASSED', 'durationMs': 0}, {'methodName': 'main_whenFirstPositiveSecondNegative_printsCorrectResults', 'status': 'PASSED', 'durationMs': 1}], '_mavenStdout': '请输入第一个整数: 请输入第一个整数: 请输入第二个整数: 请输入第一个整数: ', '_mavenStderr': ''}, 'coverage': {'lineCoverage': 0.9375, 'branchCoverage': 1.0, 'methodCoverage': 0.5, 'uncoveredItems': [{'itemId': 'db58ebb9-2245-4d3c-b882-447d6f6ec1cb', 'type': 'LINE', 'lineNumber': 4}]}, 'environment': {'javaVersion': '17', 'junitVersion': '5.10.2', 'mockFramework': 'Mockito 5.12.0', 'os': 'Windows-11-10.0.22000-SP0', 'javaVersionRaw': '17.0.19', 'mavenVersion': '3.9.16', 'javaDetectOutput': 'openjdk version "17.0.19" 2026-04-21\nOpenJDK Runtime Environment Temurin-17.0.19+10 (build 17.0.19+10)\nOpenJDK 64-Bit Server VM Temurin-17.0.19+10 (build 17.0.19+10, mixed mode, sharing)', 'mavenDetectOutput': 'Apache Maven 3.9.16 (2bdd9fddda4b155ebf8000e807eb73fd829a51d5)\nMaven home: D:\\apache-maven-3.9.16-bin\\apache-maven-3.9.16\nJava version: 17.0.19, vendor: Eclipse Adoptium, runtime: C:\\Users\\86139\\AppData\\Local\\Programs\\Eclipse Adoptium\\jdk-17.0.19.10-hotspot\nDefault locale: zh_CN, platform encoding: GBK\nOS name: "windows 11", version: "10.0", arch: "amd64", family: "windows"', 'sandboxRoot': 'C:\\Users\\86139\\AppData\\Local\\Temp\\java-ut-sandbox-2i0sk8bq', 'jacocoXml': 'C:\\Users\\86139\\AppData\\Local\\Temp\\java-ut-sandbox-2i0sk8bq\\target\\site\\jacoco\\jacoco.xml'}}
+2026-06-06 15:21:49,723 | INFO | >> 调用评审员模型评估...
+2026-06-06 15:21:51,184 | INFO | HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2026-06-06 15:22:03,486 | INFO |   [RAW] ReviewFeedback：
+2026-06-06 15:22:03,486 | INFO | ReviewFeedback:
+{
+  "sourceCodeLoc": "./Source1.java",
+  "protocolVersion": "1.0",
+  "messageId": "05a5c372-44d1-4894-99e3-630edf1dbb85",
+  "sessionId": "1cc5b535-54f1-4a90-bacc-b8985c6fb401",
+  "parentMessageId": "db15a251-02a4-47d9-a7db-4a1e4bf93fc9",
+  "timestamp": "2026-06-06T07:22:03.486148Z",
+  "messageType": "ReviewFeedback",
+  "sourceClassName": "Source1",
+  "testClassName": "Source1Test",
+  "overallAssessment": {
+    "qualityScore": 0.93,
+    "coverageAdequacy": "EXCELLENT",
+    "normativeLevel": "GOOD",
+    "summary": "Line coverage=0.94, branch coverage=1.00, overall quality score=0.93."
+  },
+  "issueDetails": [
+    {
+      "issueId": "fa49b52d-ccad-426b-8c67-74f7740ae785",
+      "category": "边界遗漏",
+      "severity": "MEDIUM",
+      "targetMethod": "UNKNOWN",
+      "description": "未测试 Integer.MIN_VALUE / -1 和 Integer.MIN_VALUE * -1 等可能溢出的场景（虽然Java不会抛出异常，但结果与数学预期不符）。",
+      "suggestion": "添加测试用例验证 Integer.MIN_VALUE / -1 的结果为 Integer.MIN_VALUE，以及 Integer.MIN_VALUE * -1 的溢出行为。",
+      "source": "LLM_REVIEWER"
+    },
+    {
+      "issueId": "4d860cd5-5cc6-4692-98c8-b0c12ae025b8",
+      "category": "代码重复",
+      "severity": "MEDIUM",
+      "targetMethod": "UNKNOWN",
+      "description": "每个测试方法都重复了 System.in/out 的保存与恢复逻辑，导致模板代码冗余。",
+      "suggestion": "提取 BeforeEach 和 AfterEach 方法或使用测试工具类减少重复。",
+      "source": "LLM_REVIEWER"
+    }
+  ],
+  "iterationAdvice": {
+    "shouldContinue": true,
+    "focusArea": [
+      "Boundary value testing"
+    ],
+    "targetNextCoverage": {
+      "lineCoverage": 1.0,
+      "branchCoverage": 1.0,
+      "methodCoverage": 0.6
+    }
+  },
+  "llmReview": {
+    "qualityScore": 0.95,
+    "coverageAdequacy": "行覆盖率93.75%，分支覆盖率100%，主要逻辑路径均已覆盖，但存在少量边界遗漏。",
+    "normativeLevel": "高",
+    "summary": "测试用例设计合理，覆盖了正常运算、除零、负数、零、边界溢出及异常输入场景。所有测试通过，断言有效。",
+    "issues": [
+      {
+        "type": "边界遗漏",
+        "description": "未测试 Integer.MIN_VALUE / -1 和 Integer.MIN_VALUE * -1 等可能溢出的场景（虽然Java不会抛出异常，但结果与数学预期不符）。",
+        "suggestion": "添加测试用例验证 Integer.MIN_VALUE / -1 的结果为 Integer.MIN_VALUE，以及 Integer.MIN_VALUE * -1 的溢出行为。"
+      },
+      {
+        "type": "代码重复",
+        "description": "每个测试方法都重复了 System.in/out 的保存与恢复逻辑，导致模板代码冗余。",
+        "suggestion": "提取 BeforeEach 和 AfterEach 方法或使用测试工具类减少重复。"
+      }
+    ],
+    "nextFocus": [
+      "补充 Integer.MIN_VALUE 除以 -1 及乘以 -1 的溢出边界测试",
+      "考虑输入为空白字符或空字符串的异常测试",
+      "提取公共设置逻辑以提升可维护性"
+    ],
+    "shouldContinue": true
+  }
+}
+2026-06-06 15:22:03,487 | INFO |   评审员输出格式验证通过。
+2026-06-06 15:22:03,487 | INFO |   质量评分: 0.93, 覆盖充分性: EXCELLENT
+2026-06-06 15:22:03,487 | INFO |   是否继续迭代: True
+2026-06-06 15:22:03,487 | INFO |   下一轮目标覆盖率: {'lineCoverage': 1.0, 'branchCoverage': 1.0, 'methodCoverage': 0.6}
+
+2026-06-06 15:22:03,487 | INFO | 
+达到最大迭代次数 (3)，停止生成。
+2026-06-06 15:22:03,487 | INFO | === 测试生成流程结束 ===
