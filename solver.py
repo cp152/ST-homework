@@ -7,7 +7,8 @@ import platform
 import tempfile
 import subprocess
 import shutil
-from typing import Dict, Any, Optional, List, Tuple
+from typing import Dict, Any, Optional, List, Tuple, DefaultDict
+from collections import defaultdict
 from xml.etree import ElementTree as ET
 
 
@@ -50,12 +51,10 @@ def _header(source_code_loc: str,
 def _run_cmd(cmd: List[str], cwd: Optional[str], timeout_s: int) -> Dict[str, Any]:
     start = time.time()
     try:
-        # 解析可执行路径（避免 PATH/扩展名问题）
         resolved = shutil.which(cmd[0])
         if resolved:
             cmd = [resolved] + cmd[1:]
 
-        # Windows: .cmd/.bat 必须通过 cmd.exe 执行
         if os.name == "nt":
             low = cmd[0].lower()
             if low.endswith(".cmd") or low.endswith(".bat"):
@@ -76,6 +75,7 @@ def _run_cmd(cmd: List[str], cwd: Optional[str], timeout_s: int) -> Dict[str, An
             "stdout": p.stdout or "",
             "stderr": p.stderr or "",
             "durationMs": int((time.time() - start) * 1000),
+            "cmd": cmd,
         }
     except subprocess.TimeoutExpired as e:
         return {
@@ -85,6 +85,7 @@ def _run_cmd(cmd: List[str], cwd: Optional[str], timeout_s: int) -> Dict[str, An
             "stdout": e.stdout or "",
             "stderr": e.stderr or "",
             "durationMs": int((time.time() - start) * 1000),
+            "cmd": cmd,
         }
     except Exception as e:
         return {
@@ -94,7 +95,9 @@ def _run_cmd(cmd: List[str], cwd: Optional[str], timeout_s: int) -> Dict[str, An
             "stdout": "",
             "stderr": f"System error running command {cmd}: {e}",
             "durationMs": int((time.time() - start) * 1000),
+            "cmd": cmd,
         }
+
 
 # =========================================================
 # Environment detection
@@ -148,11 +151,6 @@ def _sha256_bytes(data: bytes) -> str:
 
 
 def _compute_source_hash(path: str) -> str:
-    """
-    若 path 是文件：hash(文件内容)
-    若 path 是目录：按相对路径排序后 hash(相对路径+'\0'+内容+'\0'... )，保证稳定性
-    返回格式：sha256:<hex>
-    """
     if os.path.isfile(path):
         with open(path, "rb") as f:
             digest = _sha256_bytes(f.read())
@@ -177,7 +175,6 @@ def _compute_source_hash(path: str) -> str:
             h.update(b"\0")
         return "sha256:" + h.hexdigest()
 
-    # 不存在交给上层处理，这里返回空
     return "sha256:" + _sha256_bytes(b"")
 
 
@@ -185,7 +182,6 @@ def _normalize_expected_hash(source_version: str) -> str:
     sv = (source_version or "").strip()
     if not sv:
         return ""
-    # 允许传入 "abcdef..." 或 "sha256:abcdef..."
     if ":" not in sv:
         return "sha256:" + sv
     return sv
@@ -196,11 +192,15 @@ def _normalize_expected_hash(source_version: str) -> str:
 # =========================================================
 _RE_PKG = re.compile(r"^\s*package\s+([a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)*)\s*;\s*$", re.MULTILINE)
 _RE_PUBLIC_TYPE = re.compile(r"^\s*public\s+(?:class|interface|enum|record)\s+([A-Za-z_]\w*)\b", re.MULTILINE)
-
+_RE_CLASS = re.compile(r"^\s*(?:public\s+)?class\s+([A-Za-z_]\w*)\b", re.MULTILINE)
 
 def _read_text(path: str) -> str:
     with open(path, "r", encoding="utf-8", errors="replace") as f:
         return f.read()
+
+
+def _read_lines(path: str) -> List[str]:
+    return _read_text(path).splitlines()
 
 
 def _detect_package(code: str) -> Optional[str]:
@@ -210,6 +210,11 @@ def _detect_package(code: str) -> Optional[str]:
 
 def _detect_public_type(code: str) -> Optional[str]:
     m = _RE_PUBLIC_TYPE.search(code)
+    return m.group(1) if m else None
+
+
+def _detect_first_class(code: str) -> Optional[str]:
+    m = _RE_CLASS.search(code)
     return m.group(1) if m else None
 
 
@@ -233,7 +238,7 @@ def _copy_java_file_into_maven(src_file: str, project_root: str, scope: str) -> 
     """
     scope: 'main' or 'test'
     按 package 放到 src/<scope>/java/<package_path>
-    同时修正：若文件里有 public class X，但源文件名不是 X.java，则在沙箱中写成 X.java
+    若文件里有 public class X，但源文件名不是 X.java，则在沙箱中写成 X.java
     """
     code = _read_text(src_file)
     pkg = _detect_package(code)
@@ -253,6 +258,7 @@ def _copy_java_file_into_maven(src_file: str, project_root: str, scope: str) -> 
 
 # =========================================================
 # Maven POM (JUnit5 + Mockito + JaCoCo)
+# - surefire testFailureIgnore=true 让测试失败也尽量走到 verify 阶段
 # =========================================================
 def _pom_xml(java_release: int,
              junit_version: str,
@@ -306,6 +312,7 @@ def _pom_xml(java_release: int,
         <configuration>
           <useModulePath>false</useModulePath>
           <trimStackTrace>false</trimStackTrace>
+          <testFailureIgnore>true</testFailureIgnore>
         </configuration>
       </plugin>
 
@@ -333,13 +340,9 @@ def _pom_xml(java_release: int,
 
 # =========================================================
 # Parse Surefire reports => executionResults
+# - 增加 failure/error 文本，便于断言定位
 # =========================================================
 def _parse_surefire_reports(surefire_dir: str) -> Dict[str, Any]:
-    """
-    输出协议所需：
-      totalMethods, passed, failed, errors, details[]
-    details: {methodName, status, durationMs}
-    """
     total = passed = failed = errors = skipped = 0
     details: List[Dict[str, Any]] = []
 
@@ -353,7 +356,6 @@ def _parse_surefire_reports(surefire_dir: str) -> Dict[str, Any]:
             "details": []
         }
 
-    # surefire xml: TEST-*.xml
     for name in os.listdir(surefire_dir):
         if not (name.startswith("TEST-") and name.endswith(".xml")):
             continue
@@ -361,37 +363,66 @@ def _parse_surefire_reports(surefire_dir: str) -> Dict[str, Any]:
         try:
             root = ET.parse(path).getroot()
 
-            # testsuite level stats
-            total += int(root.attrib.get("tests", "0"))
-            failed += int(root.attrib.get("failures", "0"))
-            errors += int(root.attrib.get("errors", "0"))
-            skipped += int(root.attrib.get("skipped", "0"))
+            suites = []
+            if root.tag == "testsuite":
+                suites = [root]
+            elif root.tag == "testsuites":
+                suites = list(root.findall("testsuite"))
+            else:
+                suites = [root]
 
-            for tc in root.findall("testcase"):
-                method_name = tc.attrib.get("name", "")
-                time_s = float(tc.attrib.get("time", "0") or 0.0)
-                duration_ms = int(time_s * 1000)
+            for ts in suites:
+                total += int(ts.attrib.get("tests", "0"))
+                failed += int(ts.attrib.get("failures", "0"))
+                errors += int(ts.attrib.get("errors", "0"))
+                skipped += int(ts.attrib.get("skipped", "0"))
 
-                status = "PASSED"
-                if tc.find("skipped") is not None:
-                    status = "SKIPPED"
-                elif tc.find("failure") is not None:
-                    status = "FAILED"
-                elif tc.find("error") is not None:
-                    status = "ERROR"
+                for tc in ts.findall("testcase"):
+                    method_name = tc.attrib.get("name", "")
+                    class_name = tc.attrib.get("classname", "")
+                    time_s = float(tc.attrib.get("time", "0") or 0.0)
+                    duration_ms = int(time_s * 1000)
 
-                details.append({
-                    "methodName": method_name,
-                    "status": status,
-                    "durationMs": duration_ms
-                })
+                    status = "PASSED"
+                    failure_text = None
+                    failure_type = None
+                    failure_msg = None
+
+                    if tc.find("skipped") is not None:
+                        status = "SKIPPED"
+                    else:
+                        f = tc.find("failure")
+                        e = tc.find("error")
+                        if f is not None:
+                            status = "FAILED"
+                            failure_type = f.attrib.get("type")
+                            failure_msg = f.attrib.get("message")
+                            failure_text = (f.text or "")
+                        elif e is not None:
+                            status = "ERROR"
+                            failure_type = e.attrib.get("type")
+                            failure_msg = e.attrib.get("message")
+                            failure_text = (e.text or "")
+
+                    d = {
+                        "className": class_name,
+                        "methodName": method_name,
+                        "status": status,
+                        "durationMs": duration_ms
+                    }
+
+                    if status in ("FAILED", "ERROR"):
+                        d["failureType"] = failure_type
+                        d["failureMessage"] = _truncate(failure_msg or "", 2000)
+                        d["failureText"] = _truncate(failure_text or "", 8000)
+
+                    details.append(d)
         except Exception:
-            # ignore broken xml
             continue
 
     passed = max(0, total - failed - errors - skipped)
     return {
-        "totalMethods": total,   # 按你的协议样例，这里用“测试方法数量”
+        "totalMethods": total,
         "passed": passed,
         "failed": failed,
         "errors": errors,
@@ -401,7 +432,7 @@ def _parse_surefire_reports(surefire_dir: str) -> Dict[str, Any]:
 
 
 # =========================================================
-# Parse JaCoCo => coverage + uncoveredItems (NO truncation)
+# Parse JaCoCo => coverage + uncoveredItems
 # =========================================================
 def _parse_jacoco_coverage_and_uncovered(jacoco_xml_path: str) -> Optional[Dict[str, Any]]:
     if not os.path.isfile(jacoco_xml_path):
@@ -409,7 +440,6 @@ def _parse_jacoco_coverage_and_uncovered(jacoco_xml_path: str) -> Optional[Dict[
 
     root = ET.parse(jacoco_xml_path).getroot()
 
-    # 1) overall counters -> ratios
     counters: Dict[str, Dict[str, int]] = {}
     for c in root.findall("counter"):
         ctype = c.attrib.get("type")
@@ -427,14 +457,9 @@ def _parse_jacoco_coverage_and_uncovered(jacoco_xml_path: str) -> Optional[Dict[
     branch_cov = float(ratio("BRANCH"))
     method_cov = float(ratio("METHOD"))
 
-    # 2) build mapping: (packageName, sourcefilename) -> method start lines => methodName
-    # jacoco xml:
-    # <package name="com/example">
-    #   <class name="com/example/Calculator" sourcefilename="Calculator.java">
-    #     <method name="add" desc="(II)I" line="34">
     method_map: Dict[Tuple[str, str], List[Tuple[int, str]]] = {}
     for pkg in root.findall("package"):
-        pkg_name = pkg.attrib.get("name", "")  # slash separated
+        pkg_name = pkg.attrib.get("name", "")
         for cls in pkg.findall("class"):
             src_file = cls.attrib.get("sourcefilename", "")
             key = (pkg_name, src_file)
@@ -451,7 +476,6 @@ def _parse_jacoco_coverage_and_uncovered(jacoco_xml_path: str) -> Optional[Dict[
     def guess_method_name(pkg_slash: str, src_filename: str, line_no: int) -> str:
         key = (pkg_slash, src_filename)
         arr = method_map.get(key) or []
-        # choose the nearest start line <= line_no
         candidate = "UNKNOWN"
         best = -1
         for start_line, name in arr:
@@ -461,12 +485,8 @@ def _parse_jacoco_coverage_and_uncovered(jacoco_xml_path: str) -> Optional[Dict[
         return candidate
 
     uncovered_items: List[Dict[str, Any]] = []
-
-    # jacoco xml line details:
-    # <sourcefile name="Calculator.java">
-    #   <line nr="34" mi="1" ci="0" mb="2" cb="0"/>
     for pkg in root.findall("package"):
-        pkg_name = pkg.attrib.get("name", "")  # slash separated
+        pkg_name = pkg.attrib.get("name", "")
         for sf in pkg.findall("sourcefile"):
             src_filename = sf.attrib.get("name", "")
             for ln in sf.findall("line"):
@@ -475,12 +495,10 @@ def _parse_jacoco_coverage_and_uncovered(jacoco_xml_path: str) -> Optional[Dict[
                 except Exception:
                     continue
 
-                mi = int(ln.attrib.get("mi", "0"))  # missed instructions
-                ci = int(ln.attrib.get("ci", "0"))  # covered instructions
-                mb = int(ln.attrib.get("mb", "0"))  # missed branches
-                cb = int(ln.attrib.get("cb", "0"))  # covered branches
+                mi = int(ln.attrib.get("mi", "0"))
+                ci = int(ln.attrib.get("ci", "0"))
+                mb = int(ln.attrib.get("mb", "0"))
 
-                # LINE uncovered: covered instructions == 0 and missed > 0
                 if ci == 0 and mi > 0:
                     uncovered_items.append({
                         "itemId": _uuid(),
@@ -488,8 +506,6 @@ def _parse_jacoco_coverage_and_uncovered(jacoco_xml_path: str) -> Optional[Dict[
                         "lineNumber": nr
                     })
 
-                # BRANCH uncovered: missed branches > 0
-                # 协议需要 branchIndex/conditionDescription/methodName
                 if mb > 0:
                     method_name = guess_method_name(pkg_name, src_filename, nr)
                     for i in range(mb):
@@ -511,7 +527,7 @@ def _parse_jacoco_coverage_and_uncovered(jacoco_xml_path: str) -> Optional[Dict[
 
 
 # =========================================================
-# Extract compile errors from maven output
+# Maven error extraction
 # =========================================================
 def _extract_maven_error_lines(stdout: str, stderr: str) -> List[str]:
     lines: List[str] = []
@@ -521,14 +537,252 @@ def _extract_maven_error_lines(stdout: str, stderr: str) -> List[str]:
     return lines
 
 
+def _ensure_jacoco_xml(sandbox_root: str, timeout_s: int = 90) -> None:
+    jacoco_xml = os.path.join(sandbox_root, "target", "site", "jacoco", "jacoco.xml")
+    jacoco_exec = os.path.join(sandbox_root, "target", "jacoco.exec")
+
+    if os.path.isfile(jacoco_xml):
+        return
+    if not os.path.isfile(jacoco_exec):
+        return
+
+    _run_cmd(["mvn", "-q", "-DskipTests=true", "jacoco:report"], cwd=sandbox_root, timeout_s=timeout_s)
+
+
+# =========================================================
+# Assertion extraction + match grouping
+# =========================================================
+_RE_ASSERT_CALL = re.compile(r"\bassert(?:True|False|Equals|NotEquals|Null|NotNull|Same|NotSame|ArrayEquals|IterableEquals|Throws|DoesNotThrow)\s*\(")
+_RE_ASSERTIONS_DOT = re.compile(r"\bAssertions\.\s*assert")
+_RE_TEST_ANNOT = re.compile(r"@Test\b")
+_RE_METHOD_SIG = re.compile(r"\bvoid\s+([A-Za-z_]\w*)\s*\(")
+_RE_FAIL_FRAME_METHOD = re.compile(r"\bat\s+.*\.(\w+)\(([^:()]+\.java):(\d+)\)")
+_RE_FAIL_FRAME_ANY = re.compile(r"\(([^:()]+\.java):(\d+)\)")
+
+
+def _extract_assertions_by_class_and_method(java_path: str) -> Tuple[Optional[str], Dict[str, List[Dict[str, Any]]]]:
+    """
+    解析一个测试 Java 文件，返回：
+      (classSimpleName, { testMethodName: [ {lineNumber, text}, ... ] })
+    行号为 1-based，与堆栈中的 Source1Test_2.java:147 对齐。
+    """
+    code = _read_text(java_path)
+    cls = _detect_first_class(code)  # 可能 None
+    lines = code.splitlines()
+
+    by_method: Dict[str, List[Dict[str, Any]]] = {}
+    pending_test = False
+    last_test_line = -1000
+
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        if _RE_TEST_ANNOT.search(line):
+            pending_test = True
+            last_test_line = i
+            i += 1
+            continue
+
+        # 限制：@Test 后太远还没遇到方法签名则取消
+        if pending_test and i - last_test_line > 30:
+            pending_test = False
+
+        if pending_test:
+            m = _RE_METHOD_SIG.search(line)
+            if m:
+                method = m.group(1)
+                start = i
+                brace = line.count("{") - line.count("}")
+                j = i + 1
+                while j < len(lines) and brace > 0:
+                    brace += lines[j].count("{") - lines[j].count("}")
+                    j += 1
+                end = j  # exclusive
+
+                asserts: List[Dict[str, Any]] = []
+                for ln_idx in range(start, end):
+                    ln = lines[ln_idx]
+                    if _RE_ASSERT_CALL.search(ln) or _RE_ASSERTIONS_DOT.search(ln):
+                        asserts.append({
+                            "lineNumber": ln_idx + 1,
+                            "text": ln.strip()
+                        })
+                by_method[method] = asserts
+
+                pending_test = False
+                i = end
+                continue
+
+        i += 1
+
+    return cls, by_method
+
+
+def _build_assertion_evaluation(execution_results: Dict[str, Any], test_code_loc: str) -> Dict[str, Any]:
+    """
+    根据 surefire details + 源码，构建断言匹配分组：
+      matched/unmatched/notExecuted
+    """
+    details = execution_results.get("details") or []
+    test_files = _collect_java_files(test_code_loc)
+
+    # 1) 解析测试源码：class -> method -> assertions
+    class_map: Dict[str, Dict[str, List[Dict[str, Any]]]] = {}
+    file_map: Dict[str, str] = {}  # basename -> path
+    for fp in test_files:
+        file_map[os.path.basename(fp)] = fp
+        cls, by_method = _extract_assertions_by_class_and_method(fp)
+        if cls:
+            class_map[cls] = by_method
+
+    def find_assertions(class_name: str, method_name: str) -> List[Dict[str, Any]]:
+        simple = (class_name or "").split(".")[-1]
+        if simple in class_map and method_name in class_map[simple]:
+            return class_map[simple][method_name]
+        # fallback：在所有类里找同名 method（避免 className 缺失）
+        for _, mm in class_map.items():
+            if method_name in mm:
+                return mm[method_name]
+        return []
+
+    # 2) 提取失败行号
+    matched: List[Dict[str, Any]] = []
+    unmatched: List[Dict[str, Any]] = []
+    not_executed: List[Dict[str, Any]] = []
+
+    for tc in details:
+        method = tc.get("methodName", "")
+        cls = tc.get("className", "")
+        status = tc.get("status", "")
+        asserts = find_assertions(cls, method)
+
+        # 没有检测到断言也给提示（对 reviewer 有价值）
+        if not asserts:
+            continue
+
+        if status == "PASSED":
+            for a in asserts:
+                matched.append({
+                    "itemId": _uuid(),
+                    "testClassName": cls,
+                    "testMethodName": method,
+                    "file": None,
+                    "lineNumber": a["lineNumber"],
+                    "assertionText": a["text"]
+                })
+            continue
+
+        if status in ("FAILED", "ERROR"):
+            failure_text = tc.get("failureText", "") or ""
+            failure_msg = tc.get("failureMessage", "") or ""
+            failure_type = tc.get("failureType", "") or ""
+
+            # 优先找包含 method 的 frame：...method(File.java:123)
+            fail_file = None
+            fail_line = None
+
+            for m in _RE_FAIL_FRAME_METHOD.finditer(failure_text):
+                m_method, f, ln = m.group(1), m.group(2), m.group(3)
+                if m_method == method:
+                    fail_file = f
+                    try:
+                        fail_line = int(ln)
+                    except Exception:
+                        fail_line = None
+                    break
+
+            # fallback：任意 (File.java:123)
+            if fail_line is None:
+                m2 = _RE_FAIL_FRAME_ANY.search(failure_text)
+                if m2:
+                    fail_file = m2.group(1)
+                    try:
+                        fail_line = int(m2.group(2))
+                    except Exception:
+                        fail_line = None
+
+            # 找到“最可能失败的断言”：行号==fail_line，否则找 fail_line 之前最近的 assert
+            fail_assert = None
+            if fail_line is not None:
+                exact = [a for a in asserts if a["lineNumber"] == fail_line]
+                if exact:
+                    fail_assert = exact[0]
+                else:
+                    before = [a for a in asserts if a["lineNumber"] <= fail_line]
+                    if before:
+                        fail_assert = max(before, key=lambda x: x["lineNumber"])
+
+            # 分组：失败前 matched，失败断言 unmatched，失败后 notExecuted（保守）
+            if fail_assert and fail_line is not None:
+                for a in asserts:
+                    if a["lineNumber"] < fail_assert["lineNumber"]:
+                        matched.append({
+                            "itemId": _uuid(),
+                            "testClassName": cls,
+                            "testMethodName": method,
+                            "file": fail_file,
+                            "lineNumber": a["lineNumber"],
+                            "assertionText": a["text"]
+                        })
+                    elif a["lineNumber"] == fail_assert["lineNumber"]:
+                        unmatched.append({
+                            "itemId": _uuid(),
+                            "testClassName": cls,
+                            "testMethodName": method,
+                            "file": fail_file,
+                            "lineNumber": a["lineNumber"],
+                            "assertionText": a["text"],
+                            "failureType": failure_type,
+                            "failureMessage": failure_msg,
+                            "failureTextSnippet": _truncate(failure_text, 1200)
+                        })
+                    else:
+                        not_executed.append({
+                            "itemId": _uuid(),
+                            "testClassName": cls,
+                            "testMethodName": method,
+                            "file": fail_file,
+                            "lineNumber": a["lineNumber"],
+                            "assertionText": a["text"]
+                        })
+            else:
+                # 定位不到行号：该方法内断言全部归为 unmatched，并带上失败信息
+                for a in asserts:
+                    unmatched.append({
+                        "itemId": _uuid(),
+                        "testClassName": cls,
+                        "testMethodName": method,
+                        "file": fail_file,
+                        "lineNumber": a["lineNumber"],
+                        "assertionText": a["text"],
+                        "failureType": failure_type,
+                        "failureMessage": failure_msg,
+                        "failureTextSnippet": _truncate(failure_text, 1200)
+                    })
+
+    # 控制体积
+    def cap(arr: List[Dict[str, Any]], n: int) -> List[Dict[str, Any]]:
+        return arr if len(arr) <= n else arr[:n] + [{
+            "itemId": _uuid(),
+            "note": f"truncated: total={len(arr)}"
+        }]
+
+    return {
+        "matched": cap(matched, 200),
+        "unmatched": cap(unmatched, 200),
+        "notExecuted": cap(not_executed, 200),
+        "summary": {
+            "matchedCount": len(matched),
+            "unmatchedCount": len(unmatched),
+            "notExecutedCount": len(not_executed),
+        }
+    }
+
+
 # =========================================================
 # Public API: execute()
 # =========================================================
 def execute(test_case_msg: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Input: GeneratedTestCase
-    Output: ExecutionReport (match your latest schema)
-    """
     source_code_loc = test_case_msg.get("sourceCodeLoc")
     test_code_loc = test_case_msg.get("testCodeLoc")
     source_class_name = test_case_msg.get("sourceClassName")
@@ -543,7 +797,6 @@ def execute(test_case_msg: Dict[str, Any]) -> Dict[str, Any]:
     parent_id = test_case_msg.get("messageId")
     protocol_version = test_case_msg.get("protocolVersion", "1.0")
 
-    # Base report skeleton (must include required fields for main.py validation)
     report: Dict[str, Any] = {
         **_header(source_code_loc, "ExecutionReport", session_id, parent_id, protocol_version),
         "sourceClassName": source_class_name,
@@ -568,7 +821,6 @@ def execute(test_case_msg: Dict[str, Any]) -> Dict[str, Any]:
             "javaVersion": None,
             "junitVersion": required_junit_version,
             "mockFramework": "Mockito 5.12.0",
-            # extra helpful fields (allowed)
             "os": platform.platform()
         }
     }
@@ -584,7 +836,7 @@ def execute(test_case_msg: Dict[str, Any]) -> Dict[str, Any]:
         report["executionStatus"] = "SYSTEM_ERROR"
         return report
 
-    # 1) sourceVersion check (要求：不一致 => SYSTEM_ERROR)
+    # 1) sourceVersion check
     if source_version:
         expected = _normalize_expected_hash(str(source_version))
         actual = _compute_source_hash(source_code_loc)
@@ -593,7 +845,6 @@ def execute(test_case_msg: Dict[str, Any]) -> Dict[str, Any]:
         if expected and expected != actual:
             report["compileResult"]["errors"] = [f"sourceVersion mismatch: expected={expected}, actual={actual}"]
             report["executionStatus"] = "SYSTEM_ERROR"
-            # 按 main.py 校验：SYSTEM_ERROR 时 executionResults/coverage 必须为 null（这里保持 None）
             return report
 
     # 2) environment compatibility
@@ -608,26 +859,11 @@ def execute(test_case_msg: Dict[str, Any]) -> Dict[str, Any]:
 
     mismatches: List[Dict[str, Any]] = []
     if java_major is None:
-        mismatches.append({
-            "item": "java",
-            "expected": required_env.get("javaVersion"),
-            "actual": None,
-            "message": "Cannot detect java version"
-        })
+        mismatches.append({"item": "java", "expected": required_env.get("javaVersion"), "actual": None, "message": "Cannot detect java version"})
     if mvn_ver is None:
-        mismatches.append({
-            "item": "maven",
-            "expected": "installed",
-            "actual": None,
-            "message": "Cannot detect maven"
-        })
+        mismatches.append({"item": "maven", "expected": "installed", "actual": None, "message": "Cannot detect maven"})
     if required_java_major is not None and java_major is not None and java_major < required_java_major:
-        mismatches.append({
-            "item": "javaVersion",
-            "expected": f">={required_java_major}",
-            "actual": java_major,
-            "message": "Java version is lower than required"
-        })
+        mismatches.append({"item": "javaVersion", "expected": f">={required_java_major}", "actual": java_major, "message": "Java version is lower than required"})
 
     is_compat = (len(mismatches) == 0)
     report["environmentCompatibility"]["isCompatible"] = is_compat
@@ -635,18 +871,16 @@ def execute(test_case_msg: Dict[str, Any]) -> Dict[str, Any]:
 
     if not is_compat:
         report["executionStatus"] = "ENVIRONMENT_MISMATCH"
-        # ENVIRONMENT_MISMATCH 时 executionResults/coverage 必须为 null（保持 None）
         return report
 
-    # 3) build sandbox
+    # 3) sandbox
     sandbox_root = tempfile.mkdtemp(prefix="java-ut-sandbox-")
     try:
-        # write pom.xml
         with open(os.path.join(sandbox_root, "pom.xml"), "w", encoding="utf-8") as f:
             f.write(_pom_xml(
                 java_release=required_java_major or java_major or 17,
                 junit_version=required_junit_version,
-                mockito_version="5.12.0"
+                mockito_version="5.12.0",
             ))
 
         source_files = _collect_java_files(source_code_loc)
@@ -665,7 +899,7 @@ def execute(test_case_msg: Dict[str, Any]) -> Dict[str, Any]:
         for tf in test_files:
             _copy_java_file_into_maven(tf, sandbox_root, "test")
 
-        # 4) compile (test-compile compiles both main+test)
+        # 4) compile
         compile_res = _run_cmd(["mvn", "-q", "-DskipTests=true", "test-compile"], cwd=sandbox_root, timeout_s=120)
         if not compile_res.get("ok"):
             report["executionStatus"] = "TIMEOUT" if compile_res.get("timeout") else "SYSTEM_ERROR"
@@ -678,19 +912,25 @@ def execute(test_case_msg: Dict[str, Any]) -> Dict[str, Any]:
             report["compileResult"]["errors"] = _extract_maven_error_lines(compile_res.get("stdout", ""), compile_res.get("stderr", "")) \
                                             or ["Compilation failed (no [ERROR] lines captured)."]
             report["executionStatus"] = "COMPILATION_ERROR"
-            # COMPILATION_ERROR 时 executionResults/coverage 必须为 null（保持 None）
             return report
 
         report["compileResult"]["success"] = True
         report["compileResult"]["errors"] = []
 
-        # 5) run tests + jacoco (ignore test failures to still produce report)
-        test_res = _run_cmd(["mvn", "-q", "-DtestFailureIgnore=true", "verify"], cwd=sandbox_root, timeout_s=180)
+        # 5) run tests + jacoco
+        # 修复点：使用正确参数 maven.test.failure.ignore=true
+        test_res = _run_cmd(
+            ["mvn", "-q", "-Dmaven.test.failure.ignore=true", "verify"],
+            cwd=sandbox_root,
+            timeout_s=180
+        )
+        report["environment"]["mavenVerifyExitCode"] = test_res.get("exitCode")
+        report["environment"]["mavenVerifyDurationMs"] = test_res.get("durationMs")
+
         if not test_res.get("ok"):
             report["executionStatus"] = "TIMEOUT" if test_res.get("timeout") else "SYSTEM_ERROR"
             report["compileResult"]["errors"] = _extract_maven_error_lines(test_res.get("stdout", ""), test_res.get("stderr", "")) \
                                             or [test_res.get("stderr", "verify command failed")]
-            # TIMEOUT/SYSTEM_ERROR => executionResults/coverage must be null
             report["executionResults"] = None
             report["coverage"] = None
             return report
@@ -699,17 +939,30 @@ def execute(test_case_msg: Dict[str, Any]) -> Dict[str, Any]:
         surefire_dir = os.path.join(sandbox_root, "target", "surefire-reports")
         exec_stats = _parse_surefire_reports(surefire_dir)
 
-        # (可额外附加输出，reviewer 不用但调试有用；不影响协议)
-        exec_stats["_mavenStdout"] = test_res.get("stdout", "")
-        exec_stats["_mavenStderr"] = test_res.get("stderr", "")
+        exec_stats["_mavenStdout"] = _truncate(test_res.get("stdout", ""), 20000)
+        exec_stats["_mavenStderr"] = _truncate(test_res.get("stderr", ""), 20000)
+
+        # 6.1) NEW: assertion evaluation grouping
+        try:
+            exec_stats["assertionEvaluation"] = _build_assertion_evaluation(exec_stats, test_code_loc)
+        except Exception as e:
+            # 不影响主流程：给 reviewer 一个提示
+            exec_stats["assertionEvaluation"] = {
+                "matched": [],
+                "unmatched": [],
+                "notExecuted": [],
+                "summary": {"matchedCount": 0, "unmatchedCount": 0, "notExecutedCount": 0},
+                "_error": f"assertionEvaluation build failed: {repr(e)}"
+            }
 
         report["executionResults"] = exec_stats
 
-        # 7) parse jacoco + uncoveredItems (NO truncation)
+        # 7) jacoco report ensure + parse
+        _ensure_jacoco_xml(sandbox_root)
+
         jacoco_xml = os.path.join(sandbox_root, "target", "site", "jacoco", "jacoco.xml")
         cov = _parse_jacoco_coverage_and_uncovered(jacoco_xml)
         if cov is None:
-            # 即便找不到 jacoco.xml，协议仍要求 coverage 非 null（在 TEST_* / SUCCESS 状态）
             cov = {
                 "lineCoverage": 0.0,
                 "branchCoverage": 0.0,
@@ -718,7 +971,7 @@ def execute(test_case_msg: Dict[str, Any]) -> Dict[str, Any]:
             }
         report["coverage"] = cov
 
-        # 8) decide executionStatus (区分 FAILURE vs ERROR)
+        # 8) decide executionStatus
         failed = int(exec_stats.get("failed", 0))
         errs = int(exec_stats.get("errors", 0))
 
@@ -729,9 +982,9 @@ def execute(test_case_msg: Dict[str, Any]) -> Dict[str, Any]:
         else:
             report["executionStatus"] = "SUCCESS"
 
-        # extra artifacts for debugging (allowed)
         report["environment"]["sandboxRoot"] = sandbox_root
         report["environment"]["jacocoXml"] = jacoco_xml if os.path.isfile(jacoco_xml) else None
+        report["environment"]["surefireReports"] = surefire_dir if os.path.isdir(surefire_dir) else None
 
         return report
 
@@ -742,6 +995,6 @@ def execute(test_case_msg: Dict[str, Any]) -> Dict[str, Any]:
         report["coverage"] = None
         return report
 
-    # 调试阶段建议保留沙箱目录；若你要强制清理可自行删除：
+    # 如需清理可启用：
     # finally:
     #     shutil.rmtree(sandbox_root, ignore_errors=True)
