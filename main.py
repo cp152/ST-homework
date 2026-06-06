@@ -268,15 +268,56 @@ def run_test_generation(source_code_loc: str, class_name: str, class_description
 
 
 # ================== 使用示例 ==================
-if __name__ == "__main__":
-    # 模拟用户输入
-    demo_source_code_loc = "./Source1.java"
-    demo_class_name = "Source1"
-    demo_class_description = "命令行交互式计算器：加减乘除与取余，含除数为0分支"
-    demo_max_iterations = 1
-    demo_target = {"lineCoverage": 0.9, "branchCoverage": 0.8, "methodCoverage": 1.0}
+import argparse
 
-    # 注意：以下调用会因模型未实现而抛出 NotImplementedError，
-    # 请替换真实的模型导入后运行。
-    run_test_generation(demo_source_code_loc, demo_class_name, demo_class_description, 
-                        demo_max_iterations, demo_target)
+def main():
+    parser = argparse.ArgumentParser(description="示例程序，演示如何使用 -n 等参数")
+    parser.add_argument('-n', '--name', type=str, required=False, help='-n 传类名，或 --name 传类名')
+    parser.add_argument('-l', '--loc', type=str, required=False, help='-l 传文件路径，或 --loc 传文件路径')
+    parser.add_argument('-d', '--desc', type=str, required=False, help='-d 传类描述，或 --desc 传类描述')
+    parser.add_argument('-i', '--iterations', type=int, required=False, help='-i 传最大迭代次数，或 --iterations 传最大迭代次数')
+    parser.add_argument('-t', '--target', type=int, required=False, help='-t 传目标覆盖率，或 --target 传目标覆盖率')
+
+    args = parser.parse_args()
+
+    if args.name:
+        print(f"类名: {args.name}")
+    else:
+        print("请输入类名：", end="")
+        input_name = input().strip()
+        args.name = input_name
+        print(f"类名: {args.name}")
+
+    if args.loc:
+        print(f"文件路径: {args.loc}")
+    else:
+        print("请输入文件路径：", end="")
+        input_loc = input().strip()
+        args.loc = input_loc
+        print(f"文件路径: {args.loc}")
+
+    if args.desc:
+        print(f"类描述: {args.desc}")
+    else:
+        print("请输入类描述：", end="")
+        input_desc = input().strip()
+        args.desc = input_desc
+        print(f"类描述: {args.desc}")
+
+    if args.iterations is not None:
+        print(f"最大迭代次数: {args.iterations}")
+    else:
+        print("默认迭代次数：3")
+        args.iterations = 3
+
+    if args.target is not None:
+        print(f"目标覆盖率: {args.target}")
+        demo_target = {"lineCoverage": args.target, "branchCoverage": args.target, "methodCoverage": args.target}
+    else:
+        print("默认目标覆盖率：行0.8，分支0.7，方法0.75")
+        demo_target = {"lineCoverage": 0.8, "branchCoverage": 0.7, "methodCoverage": 0.75}
+
+    run_test_generation(args.loc, args.name, args.desc, args.iterations, demo_target)
+
+if __name__ == "__main__":
+    main()

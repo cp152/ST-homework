@@ -64,13 +64,22 @@ def _build_test_code(source_simple: str, package_in_source: Optional[str], class
         prompt = prompts.get_generate_prompt(source_simple,package_in_source,class_description,source_code,previous_feedback)
         # print(f"prompt:{prompt}")
 
-        response = client.chat.completions.create (
-            model="deepseek/deepseek-v4-flash",   
-            messages=[
-                {"role": "user", 
-                 "content": prompt}
-            ]
-        )
+        # 改为try，若调用失败则重复尝试，直到5次（包含）后放弃并raise异常。因为生成测试代码是核心步骤，且偶尔会有网络或服务端问题导致调用失败，所以需要增加鲁棒性。
+        for attempt in range(5):
+            try:
+                response = client.chat.completions.create (
+                    model="deepseek/deepseek-v4-flash",   
+                    messages=[
+                        {"role": "user", 
+                        "content": prompt}
+                    ]
+                )
+                break  # 成功则跳出循环
+            except Exception as e:
+                print(f"调用失败，正在重试... (第 {attempt + 1} 次，共 5 次) 错误信息: {e}")
+                if attempt == 4:  # 最后一次失败则raise异常
+                    raise
+
         print(response)
         response = response.choices[0].message.content
         if(response[0] == '`'):
